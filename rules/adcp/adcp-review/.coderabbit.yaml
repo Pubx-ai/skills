@@ -1,0 +1,30 @@
+# yaml-language-server: $schema=https://coderabbit.ai/integrations/schema.v2.json
+#
+# Copy this file to the ROOT of the repo that implements AdCP (or merge the
+# knowledge_base block into its existing .coderabbit.yaml). It teaches
+# CodeRabbit to pick up BUGBOT.md as review guidelines, since BUGBOT.md is not
+# in CodeRabbit's default detection list.
+# See https://docs.coderabbit.ai/knowledge-base/code-guidelines
+#
+# Notes:
+# - Custom filePatterns are ADDED to CodeRabbit's defaults (AGENTS.md,
+#   CLAUDE.md, .cursor/rules/*, .rules/*, ...); they do not replace them.
+# - File names are case-sensitive: bugbot.md will NOT match **/BUGBOT.md.
+# - Guidelines are directory-scoped: BUGBOT.md applies to its own directory
+#   and subdirectories, so place it at the repo root (or the AdCP service's
+#   subtree in a monorepo).
+# - Do NOT list BUGBOT.md under reviews.path_instructions — that makes
+#   CodeRabbit review the file as changed code instead of using it as
+#   guidelines.
+# - The .cursor pattern is listed explicitly because ** does not reliably
+#   match into dot-directories (CodeRabbit's own defaults spell out
+#   .cursor/rules/* for the same reason). It covers repos that keep the file
+#   at .cursor/BUGBOT.md for Cursor Bugbot. Prefer the repo-root location if
+#   you use CodeRabbit, so directory scoping covers the whole repo.
+
+knowledge_base:
+  code_guidelines:
+    enabled: true
+    filePatterns:
+      - "**/BUGBOT.md"
+      - "**/.cursor/BUGBOT.md"

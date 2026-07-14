@@ -14,7 +14,7 @@ description: >
 # AdCP Protocol Conformance Review
 
 This project implements the **AdCP (Ad Context Protocol)** from AAO
-(agenticadvertising.org). In addition to your normal review, check whether the changed
+(agenticadvertising.org). As part of your review, audit whether the relevant changed
 code conforms to the AdCP technical requirements.
 
 The protocol evolves (the spec ships new minor releases and errata regularly), so the

@@ -32,14 +32,16 @@ Run the checks; each failure has a specific remedy, not a workaround:
   must not equal the base resolved in the next check — nor `main`,
   `master`, `develop`, or a `release/*` branch. If it does, the branch step
   was skipped; use **create-branch** first and move the work over.
-- **Commits ahead of the base.** Determine the base
+- **Commits ahead of the base.** When the caller or user names a base
+  explicitly (stacked/chained PRs target the previous branch in the stack,
+  not the repo base), use that name; otherwise determine it
   (`gh repo view --json defaultBranchRef -q .defaultBranchRef.name`, or
   `develop` where that's the repo's convention — check where recent PRs
-  merge with `gh pr list --limit 20 --json baseRefName`), refresh it with
-  `git fetch origin <base>` (the local tracking ref is only as fresh as the
-  last fetch), then check `git log --oneline origin/<base>..HEAD`. No
-  commits → nothing to raise; uncommitted work goes through
-  **create-commit** first.
+  merge with `gh pr list --limit 20 --json baseRefName`). **Either way**,
+  refresh it with `git fetch origin <base>` (the local tracking ref is only
+  as fresh as the last fetch — an explicitly named base can be just as
+  stale) and check `git log --oneline origin/<base>..HEAD`. No commits →
+  nothing to raise; uncommitted work goes through **create-commit** first.
 - **Clean working tree.** Uncommitted or untracked changes at PR time are
   either forgotten work (commit them) or unrelated clutter (leave behind,
   but tell the user they exist). Never let them decide silently.

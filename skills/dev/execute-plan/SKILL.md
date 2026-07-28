@@ -66,8 +66,10 @@ contrary:
 
 - run the **local-review** skill and address its findings before **every**
   commit,
-- run the **local-pr-review** skill and address its findings before pushing
-  the branch or opening a PR,
+- run the **local-pr-review** skill and address its findings before the
+  branch is first published as a ready-for-review PR — or before a draft PR
+  is marked ready; pushes to an existing user-approved draft ride on the
+  per-commit local-review gate instead of a full branch review each time,
 - never push the branch or open a PR without the user's explicit request or
   confirmation — suggest **raise-pr** and wait,
 - report a checkpoint to the user after every task (format in step 3.6).
@@ -196,8 +198,14 @@ verifications passing.
 
 After the last task: run the full test suite one final time, summarize what was
 built against the plan's Success Metrics / acceptance criteria, and list any
-deviations or follow-ups. Before pushing the branch or opening a PR, run the
-**local-pr-review** skill over the branch's full diff against the base branch
+deviations or follow-ups. Before the branch is first published as a ready-for-review PR — or before
+an existing draft is marked ready; an intentionally early draft may be
+raised before this gate (with the user's consent), its pushes riding on the
+per-commit local-review gate — run the
+**local-pr-review** skill over the branch's full diff against **the same
+base the eventual PR will target** — the repo base by default; under the
+chained-branches option, the previous phase's branch — passed to it
+explicitly
 and address its findings — the PR gate, just as local-review is the per-commit
 gate. If addressing findings adds commits, re-run local-pr-review until the
 final diff passes. Pushing the branch and raising the PR are then the
@@ -216,7 +224,11 @@ anyway, offer the two shapes with their costs and let them choose:
   the same branch. Reviewers see progress continuously; no sync machinery;
   the review targets a moving diff.
 - **Chained branches per phase** — each phase branches off the previous
-  one; execution never blocks on merges. Costs the user accepts by choosing
-  it: review feedback on an early PR forces a rebase cascade through every
-  later branch, the stack must merge in order, and squash merges break it
-  outright — never squash a stacked PR.
+  one; execution never blocks on merges. The first phase branches off — and
+  its PR targets — the repo base as normal; **each later phase's PR targets
+  the previous phase's branch**, not the repo base — tell raise-pr the base
+  explicitly, or every stacked PR shows a cumulative overlapping diff.
+  Costs the user accepts by choosing it: review feedback on an early PR
+  forces a rebase cascade through every later branch, the stack must merge
+  in order, and squash merges break it outright — never squash a stacked
+  PR.

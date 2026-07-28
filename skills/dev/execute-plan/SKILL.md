@@ -32,9 +32,33 @@ the best match, in this order of preference:
 2. **`executing-plans`** (Superpowers, sometimes installed as a personal
    skill) — same-session execution loop with review checkpoints.
 
-Invoke the first **eligible** delegate — `subagent-driven-development` only
-when subagents are actually available, otherwise `executing-plans` when
-present — and follow its execution loop instead of the one in section 3.
+Eligibility is necessary but not sufficient — **judge the fit against the
+plan's shape** before delegating, because the wrong loop can cost more than
+it buys:
+
+- **Subagent dispatch pays off when** tasks are substantial, independent
+  (touching different files — the plan's File Structure map tells you), and
+  numerous enough that fresh reviewer eyes per task and a lean main context
+  outweigh each subagent re-reading schemas, fixtures, and prior code from
+  scratch. That rebuild is the dominant cost: on one tightly-coupled plan
+  (July 2026) it ran 3–4× slower than same-session execution — a single
+  observation, but the mechanism generalizes.
+- **Prefer a same-session loop** (`executing-plans`, or section 3) when most
+  tasks touch the same files (they serialize anyway, so dispatch buys no
+  parallelism), when the plan is doc/config-heavy with small tasks (the
+  per-dispatch rebuild dwarfs the work), or when the user has signaled that
+  speed matters more than maximum review ceremony.
+- **State the choice and its reason** before starting; an explicit user
+  preference for speed or rigor wins over this heuristic. Mid-plan, if
+  dispatch overhead is visibly dominating (long rebuilds yielding only
+  trivial findings), say so and propose switching loops rather than
+  silently continuing at the chosen pace.
+
+Invoke the first delegate that is both **eligible and fitting**:
+`subagent-driven-development` when subagents are actually available *and*
+the plan's shape favours dispatch (per the criteria above); otherwise
+`executing-plans` when present *and* a delegated same-session loop fits.
+Follow that delegate's execution loop instead of the one in section 3.
 
 Delegation covers the loop, not the guarantees. These invariants apply no
 matter which loop runs, and win over anything the delegated skill says to the
@@ -48,7 +72,9 @@ contrary:
   confirmation — suggest **raise-pr** and wait,
 - report a checkpoint to the user after every task (format in step 3.6).
 
-If neither delegate is eligible, follow the process below.
+If no delegate is both eligible and fitting, follow the process below —
+an eligible delegate that doesn't fit the plan's shape falls through to
+section 3 just like a missing one.
 
 ## 1. Locate the plan
 
@@ -178,3 +204,19 @@ final diff passes. Pushing the branch and raising the PR are then the
 user's call — suggest the **raise-pr** skill and wait for their go-ahead;
 never publish a branch or open a PR the user hasn't explicitly asked for or
 confirmed.
+
+**The PR gate never blocks task progress.** The whole plan executes as
+review-gated commits on the single plan branch; the PR comes once, at the
+end — execution never waits on a PR merge. When a plan feels too big for
+one reviewable PR, that's usually a scoping smell to report (create-plan
+mandates one plan per subsystem). If the user wants incremental review
+anyway, offer the two shapes with their costs and let them choose:
+
+- **Grow an open draft PR** — raise early (with consent), keep committing to
+  the same branch. Reviewers see progress continuously; no sync machinery;
+  the review targets a moving diff.
+- **Chained branches per phase** — each phase branches off the previous
+  one; execution never blocks on merges. Costs the user accepts by choosing
+  it: review feedback on an early PR forces a rebase cascade through every
+  later branch, the stack must merge in order, and squash merges break it
+  outright — never squash a stacked PR.

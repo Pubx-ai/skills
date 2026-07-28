@@ -77,6 +77,17 @@ Pace the interview adaptively:
   that". If the environment provides a structured question tool, present the recommended
   answer as the first option and mark it as recommended; otherwise state it inline.
 
+**Support skills for the interview.** This phase was shaped by two skills worth
+borrowing from directly when they're available in the session — for technique only;
+this skill's output contract (the requirements document below) always wins:
+
+- **interview-me** — the one-question-at-a-time discipline of digging for what the
+  user *actually* wants rather than what they think they should want; reach for it
+  when the ask feels underspecified at the intent level, not just the detail level.
+- **grilling** (or **grill-me**) — relentless stress-testing of the premise itself;
+  reach for it when the feature's *why* wobbles under its own answers and the kindest
+  thing is to pressure-test it before anyone writes requirements for it.
+
 Skip anything you can reasonably infer, but say what you inferred so the user can correct
 it. Draw candidate gaps from these dimensions as relevant to the feature:
 
@@ -107,7 +118,8 @@ Once the critical gaps are closed, write the document using the structure in
 [`references/example-requirements.md`](references/example-requirements.md) for a filled-in
 example and a contrasting under-specified one.
 
-Save it to a file so it can feed a planner or be reviewed later. Default to
+Save it to a file so it can feed the **create-plan** skill — the natural next step
+once requirements are signed off — or be reviewed later. Default to
 `docs/requirements/<feature-slug>.md` (create the folder if needed); if the repo has no
 `docs/` convention, use `requirements.md` at the repo root. Confirm the location with the
 user if there's any doubt, and tell them where you wrote it.

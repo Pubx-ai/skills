@@ -104,6 +104,12 @@ meeting the principles below. See
 [`references/example-task.md`](references/example-task.md) for a fully worked task
 at the level of specificity to aim for.
 
+**Support skill.** When the **writing-plans** skill is available in the session,
+apply its discipline while writing each task — bite-sized steps, each independently
+verifiable, written for an executor with zero prior context. Technique only: the
+output contract here (the plan directory, index, and task-file structure from the
+template) always wins over any format it suggests.
+
 The plan is a **directory, not a single file** — progressive disclosure for the
 executing agent, which loads the index plus exactly one task file per session
 instead of the whole plan:
@@ -121,7 +127,8 @@ The executor works the index in order: read `plan.md`, open the first unchecked
 task file, complete it, tick its checkbox in the index, move on. Create the
 folders if needed (this mirrors where gather-requirements puts its output); if
 the repo has a different plans convention, follow it. Tell the user where you
-wrote it.
+wrote it — and that the **execute-plan** skill is the natural next step: it works
+this exact directory format, task by task, with review gates.
 
 ## Planning principles
 

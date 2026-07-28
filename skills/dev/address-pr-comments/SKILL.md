@@ -157,6 +157,13 @@ simple fixes, then complex ones — verifying each fix individually rather than
 batching untested changes. Where verification means running the project's
 tests, the **run-tests** skill resolves and runs them correctly.
 
+**Authorization scope:** the user asking for comments to be addressed
+authorizes exactly the side effects that resolution requires — commits and
+regular pushes to the *existing* PR branch, behind the gates below. Anything
+beyond that scope — force-pushing, rebasing published history, opening a new
+PR, or changes outside the findings being addressed — needs the user's
+explicit confirmation first.
+
 - Make the fixes on the PR branch. Before committing, run the
   **local-review** skill over the changes and address its findings; if that
   changed any code, re-run it — commit only a state that passed the gate.

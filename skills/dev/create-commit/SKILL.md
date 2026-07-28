@@ -69,7 +69,13 @@ missed.
 Build it with one `-m` per block:
 
 ```bash
-git commit -m "<type>(<scope>): <subject>" [-m "<body>"] [-m "<footer>"]
+git commit -m "<type>(<scope>): <subject>"
+```
+
+or, when a body and footer are warranted, one `-m` per block:
+
+```bash
+git commit -m "<type>(<scope>): <subject>" -m "<body>" -m "<footer>"
 ```
 
 Subject line rules and the reasoning behind them:

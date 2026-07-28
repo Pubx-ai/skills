@@ -16,7 +16,7 @@ when a rung is ambiguous.
 | `pnpm-lock.yaml` + `playwright.config.*` | E2E, Playwright | `pnpm test` / `pnpm exec playwright test path` |
 | `bun.lock` | TypeScript, bun:test | `bun run test` — see quirk below before using bare `bun test` |
 | `poetry.lock` | Python, pytest via poetry | `poetry run pytest` |
-| `package-lock.json` + `jest.config.*` | TypeScript/JS, Jest | `npm test` when the script exists (one-shot: `npm test -- --watchAll=false`); no script → `npx jest --watchAll=false` |
+| `package-lock.json` + `jest.config.*` | TypeScript/JS, Jest | `npm test` when the script exists (one-shot: `npm test -- --watchAll=false`); no script → `npx --no-install jest --watchAll=false` (fails rather than downloading jest on demand) |
 | Requirements files + `Makefile: test` | Python, venv pytest | `make test` or `.venv/bin/pytest` |
 | JSON Schema + validation command in docs | Schema-validated data repo | The documented validator invocation — exit code is the gate |
 | None of the above + "no test suite" note | Intentionally testless | Documented manual validation; never scaffold tests |

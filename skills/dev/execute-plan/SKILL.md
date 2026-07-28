@@ -110,8 +110,11 @@ Then, for each task in index order:
 
 1. Mark it in progress. Open its task file — that file plus `plan.md`'s Global
    Constraints is the full spec.
-2. Follow the steps exactly, including the test-first cycle: write the failing
-   test, verify it fails, implement, verify it passes. Don't skip
+2. Follow the steps exactly — including the test-first cycle (write the
+   failing test, verify it fails, implement, verify it passes) **where the
+   task's steps call for one**. Tasks with no applicable automated test
+   (documentation, configuration, setup) run their task-specific
+   verification commands instead of inventing a test. Don't skip
    verifications, and don't substitute your own approach where the plan
    specifies one. One exception: task files usually end with their own
    *commit* step — don't execute it as written. When you reach it, stage the
@@ -123,7 +126,9 @@ Then, for each task in index order:
    project intends. If the **verification-before-completion** skill
    is available, apply it: a task is only done when you hold the command
    output proving it, never on the strength of the code looking right.
-4. Tick the task's checkbox in `plan.md` and mark the todo completed — the
+4. Tick the task's checkbox in the file that holds the task index —
+   `plan.md` for directory plans, the plan file itself for single-file
+   plans — and mark the todo completed — the
    plan-state change belongs in the same reviewed commit as the task's work,
    so a session that dies at the checkpoint never leaves a completed task
    looking unchecked (and ripe for re-execution).

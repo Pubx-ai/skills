@@ -25,13 +25,18 @@ works and catch what would bite a reviewer — or production — later.
 
 ## 1. Determine the base branch
 
-The base is the branch this work will merge back into — usually `develop`, otherwise
-`main` (some repos use `master`). Pick it deterministically instead of guessing:
+The base is the branch this work will merge back into. When the caller passes one
+explicitly (the **raise-pr** skill does), use it verbatim. Otherwise resolve it the same
+way the sibling skills do — from the remote's truth, never from local branch names:
 
-- Prefer **`develop`** if it exists (`git rev-parse --verify --quiet develop`), else fall
-  back to **`main`** (or `master`).
-- If the repo tracks a remote, prefer the remote ref (e.g. `origin/develop`) so the
-  comparison is against the shared branch, not a stale local copy.
+- The repo's default branch is authoritative:
+  `gh repo view --json defaultBranchRef -q .defaultBranchRef.name`. Where recent PRs
+  merge tells you when the convention differs (`gh pr list --limit 20 --json baseRefName`
+  — e.g. a `develop` flow). A local `develop` branch merely *existing* is not evidence of
+  a develop convention.
+- **Refresh before comparing**: `git fetch origin <base>` — the local tracking ref is
+  only as fresh as the last fetch, and a stale base reviews a different diff than the PR
+  will present. Compare against `origin/<base>`.
 - If it's still ambiguous, ask the user which branch to review against rather than
   assuming.
 
@@ -40,12 +45,14 @@ The base is the branch this work will merge back into — usually `develop`, oth
 Review only what *this branch* introduced, not unrelated commits that landed on the
 base since you branched off.
 
-- **Use the merge-base (three-dot) diff:** `git --no-pager diff <base>...HEAD` shows the
-  changes the branch adds relative to where it diverged from `<base>` — this is exactly
-  what a PR shows. (Two-dot `<base>..HEAD` can include base-side changes and mislead you.)
-- **Overview first:** `git --no-pager diff <base>...HEAD --stat` for the shape of the
+- **Use the merge-base (three-dot) diff:** `git --no-pager diff origin/<base>...HEAD` shows
+  the changes the branch adds relative to where it diverged from the base — this is exactly
+  what a PR shows. Always diff against the freshly fetched `origin/<base>` from step 1, never
+  the bare local name. (Two-dot `origin/<base>..HEAD` can include base-side changes and
+  mislead you.)
+- **Overview first:** `git --no-pager diff origin/<base>...HEAD --stat` for the shape of the
   change, then the full diff for detail.
-- **See the commits too:** `git --no-pager log --oneline <base>..HEAD` reveals how the
+- **See the commits too:** `git --no-pager log --oneline origin/<base>..HEAD` reveals how the
   work is structured and whether the commit history itself is sensible.
 - **In Cursor**, the `@diff <base>...` context is a convenience view — use it if present,
   but prefer the git commands above when the base branch is in doubt.

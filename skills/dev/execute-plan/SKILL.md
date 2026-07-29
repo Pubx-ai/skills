@@ -22,16 +22,41 @@ it exactly and stopping when it fails you, rather than improvising around gaps.
 
 ## 0. Delegate if a plan-execution skill is available
 
-Check the skills available in this session for one named
-**`executing-plans`** (Superpowers, sometimes installed as a personal
-skill) — a same-session execution loop with review checkpoints. If it
-exists, invoke it and follow its execution loop instead of the one in
-section 3. **State the choice and its reason** before starting; an explicit
-user preference (including "use the built-in loop") wins over the default.
-Execution strongly prefers staying same-session: each subagent dispatch
-rebuilds the plan context (schemas, fixtures, prior code) from scratch, a
-cost that has been observed dominating the work itself. Dispatch is
-therefore consent-gated — see the invariants below.
+Check the skills available in this session and delegate the execution loop
+to the best match, in this order of preference:
+
+1. **`executing-plans`** (Superpowers, sometimes installed as a personal
+   skill) — same-session execution loop with review checkpoints.
+
+Subagent availability is necessary but not sufficient for dispatching tasks
+to subagents — **judge the fit against the plan's shape**, because the wrong
+loop can cost more than it buys:
+
+- **Subagent dispatch pays off when** tasks are substantial, independent
+  (touching different files — the plan's File Structure map tells you), and
+  numerous enough that fresh reviewer eyes per task and a lean main context
+  outweigh each subagent re-reading schemas, fixtures, and prior code from
+  scratch.
+- **Prefer a same-session loop** (`executing-plans`, or section 3) when most
+  tasks touch the same files (they serialize anyway, so dispatch buys no
+  parallelism), when the plan is doc/config-heavy with small tasks (the
+  per-dispatch rebuild dwarfs the work), or when the user has signaled that
+  speed matters more than maximum review ceremony.
+- **State the choice and its reason** before starting; an explicit user
+  preference for speed or rigor wins over this heuristic. Mid-plan, if
+  dispatch overhead is visibly dominating (long rebuilds yielding only
+  trivial findings), say so and propose switching loops rather than
+  silently continuing at the chosen pace.
+
+When the criteria favour dispatch, that is a **proposal to the user**, never
+a silent switch — the consent gate in the invariants below governs. Either
+answer continues execution:
+
+- **User agrees** → run the section 3 loop, dispatching tasks to subagents;
+  every invariant below still binds each dispatched task.
+- **User declines, or dispatch was never worth proposing** → invoke
+  `executing-plans` when present and follow its execution loop instead of
+  the one in section 3; without it, use section 3 directly.
 
 Delegation covers the loop, not the guarantees. These invariants apply no
 matter which loop runs, and win over anything the delegated skill says to the
@@ -176,8 +201,9 @@ verifications passing.
 
 After the last task: run the full test suite one final time, summarize what was
 built against the plan's Success Metrics / acceptance criteria, and list any
-deviations or follow-ups. Before the branch is first published as a ready-for-review PR — or before
-an existing draft is marked ready; an intentionally early draft may be
+deviations or follow-ups. Before the branch is first published as a
+ready-for-review PR — or before an existing draft is marked ready; an
+intentionally early draft may be
 raised before this gate (with the user's consent), its pushes riding on the
 per-commit local-review gate — run the
 **local-pr-review** skill over the branch's full diff against **the same

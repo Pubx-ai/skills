@@ -8,9 +8,9 @@ description: >
   points at a plan directory or file (e.g. under docs/plans/) and asks to build
   it. This is the natural next step after the create-plan skill — reach for it
   as soon as a plan exists and the ask is to start coding. If a skill named
-  "subagent-driven-development" or "executing-plans" is available in the
-  session, this skill delegates the loop to it rather than duplicating it,
-  while keeping its own review-gate and checkpoint invariants.
+  "executing-plans" is available in the session, this skill delegates the
+  loop to it rather than duplicating it, while keeping its own review-gate
+  and checkpoint invariants.
 ---
 
 # Execute Plan
@@ -22,48 +22,27 @@ it exactly and stopping when it fails you, rather than improvising around gaps.
 
 ## 0. Delegate if a plan-execution skill is available
 
-Check the skills available in this session and delegate the execution loop to
-the best match, in this order of preference:
-
-1. **`subagent-driven-development`** (Superpowers) — when it exists *and*
-   subagents are available in the session. It dispatches each task to a fresh
-   subagent and reviews the result in two stages (spec compliance, then code
-   quality), which is a stronger form of the per-task gate below.
-2. **`executing-plans`** (Superpowers, sometimes installed as a personal
-   skill) — same-session execution loop with review checkpoints.
-
-Eligibility is necessary but not sufficient — **judge the fit against the
-plan's shape** before delegating, because the wrong loop can cost more than
-it buys:
-
-- **Subagent dispatch pays off when** tasks are substantial, independent
-  (touching different files — the plan's File Structure map tells you), and
-  numerous enough that fresh reviewer eyes per task and a lean main context
-  outweigh each subagent re-reading schemas, fixtures, and prior code from
-  scratch. That rebuild is the dominant cost: on one tightly-coupled plan
-  (July 2026) it ran 3–4× slower than same-session execution — a single
-  observation, but the mechanism generalizes.
-- **Prefer a same-session loop** (`executing-plans`, or section 3) when most
-  tasks touch the same files (they serialize anyway, so dispatch buys no
-  parallelism), when the plan is doc/config-heavy with small tasks (the
-  per-dispatch rebuild dwarfs the work), or when the user has signaled that
-  speed matters more than maximum review ceremony.
-- **State the choice and its reason** before starting; an explicit user
-  preference for speed or rigor wins over this heuristic. Mid-plan, if
-  dispatch overhead is visibly dominating (long rebuilds yielding only
-  trivial findings), say so and propose switching loops rather than
-  silently continuing at the chosen pace.
-
-Invoke the first delegate that is both **eligible and fitting**:
-`subagent-driven-development` when subagents are actually available *and*
-the plan's shape favours dispatch (per the criteria above); otherwise
-`executing-plans` when present *and* a delegated same-session loop fits.
-Follow that delegate's execution loop instead of the one in section 3.
+Check the skills available in this session for one named
+**`executing-plans`** (Superpowers, sometimes installed as a personal
+skill) — a same-session execution loop with review checkpoints. If it
+exists, invoke it and follow its execution loop instead of the one in
+section 3. **State the choice and its reason** before starting; an explicit
+user preference (including "use the built-in loop") wins over the default.
+Execution strongly prefers staying same-session: each subagent dispatch
+rebuilds the plan context (schemas, fixtures, prior code) from scratch, a
+cost that has been observed dominating the work itself. Dispatch is
+therefore consent-gated — see the invariants below.
 
 Delegation covers the loop, not the guarantees. These invariants apply no
 matter which loop runs, and win over anything the delegated skill says to the
 contrary:
 
+- execution defaults strongly to **same-session** — dispatch tasks to
+  subagents only when the user explicitly requests it or agrees to a
+  proposal: if the plan's shape makes dispatch look clearly beneficial
+  (large, independent, numerous tasks), propose it with the trade-off and
+  wait. Never dispatch silently — including when the delegated skill's own
+  text recommends a subagent-driven variant,
 - run the **local-review** skill and address its findings before **every**
   commit,
 - run the **local-pr-review** skill and address its findings before the
@@ -74,9 +53,8 @@ contrary:
   confirmation — suggest **raise-pr** and wait,
 - report a checkpoint to the user after every task (format in step 3.6).
 
-If no delegate is both eligible and fitting, follow the process below —
-an eligible delegate that doesn't fit the plan's shape falls through to
-section 3 just like a missing one.
+If `executing-plans` is not available — or the user prefers the built-in
+loop — follow the process below.
 
 ## 1. Locate the plan
 

@@ -38,8 +38,8 @@ everything works without them, but they deepen the experience. Install any of th
 | [`writing-plans`](https://skills.sh/obra/superpowers/writing-plans) | `obra/superpowers` | create-plan |
 | [`systematic-debugging`](https://skills.sh/obra/superpowers/systematic-debugging) | `obra/superpowers` | run-tests (debugging hand-off) |
 | [`grill-me`](https://skills.sh/mattpocock/skills/grill-me) / [`grilling`](https://skills.sh/mattpocock/skills/grilling) | `mattpocock/skills` | gather-requirements (premise stress-testing) |
-| [`writing-great-skills`](https://skills.sh/mattpocock/skills/writing-great-skills) | `mattpocock/skills` | skill authoring (see repo AGENTS.md) |
-| [`skill-creator`](https://skills.sh/anthropics/skills/skill-creator) | `anthropics/skills` | skill authoring (vendored backup: `.agents/skills/skill-creator-local/`) |
+| [`writing-great-skills`](https://skills.sh/mattpocock/skills/writing-great-skills) | `mattpocock/skills` | skill authoring |
+| [`skill-creator`](https://skills.sh/anthropics/skills/skill-creator) | `anthropics/skills` | skill authoring |
 | [`webapp-testing`](https://skills.sh/anthropics/skills/webapp-testing) | `anthropics/skills` | run-tests, local-test-review (browser validation) |
 | [`testing-strategy`](https://skills.sh/anthropics/knowledge-work-plugins/testing-strategy) | `anthropics/knowledge-work-plugins` | local-test-review (delegated strategy design) |
 | [`code-review`](https://skills.sh/coderabbitai/skills/code-review) | `coderabbitai/skills` | local-bot-review (delegated CodeRabbit review) |

@@ -62,11 +62,30 @@ gh api --paginate repos/{owner}/{repo}/pulls/{n}/reviews    # review submissions
 `--paginate` is not optional: without it `gh api` returns only the first 30
 items, silently dropping the rest on comment-heavy PRs.
 
-- Use `--jq` to pull out `id`, `user.login`, `path`, `line`, `created_at`,
-  `in_reply_to_id`, `commit_id`, and `body`; write large outputs to a scratch
-  file rather than flooding context. Keep `commit_id` — inline comments and
-  review submissions both carry it, and it's the commit binding the
-  staleness and freshness rules below are checked against.
+- Use `--jq` to pull out `id`, `user.login`, `path`, `line`, `in_reply_to_id`,
+  and `body`, plus the fields the freshness rule below needs: `commit_id` and
+  the signal's own timestamp — `created_at` on comments, `submitted_at` on
+  review submissions, and the CI check's completion time from
+  `gh pr checks <n>`. Write large outputs to a scratch file rather than
+  flooding context.
+- **A bot signal is current only if it covers this code *and* answers the
+  latest request.** Check both as you load, per bot:
+  - **Covers this code** — its `commit_id` or check SHA equals the PR head
+    (`gh pr view --json headRefOid -q .headRefOid`; not `git rev-parse HEAD`,
+    which diverges in detached or merge checkouts and when local commits
+    aren't pushed). With no commit binding at all, its timestamp must be
+    later than the last push.
+  - **Answers the latest request** — its timestamp is later than the most
+    recent trigger comment on the PR (`@coderabbitai review`, `bugbot run`),
+    whoever posted it and whenever. A prior pass on the *same head* — a
+    rate-limited or partial one, say — predates that trigger, so the commit
+    check alone would accept exactly the state the re-review was meant to
+    replace.
+
+  A signal failing either test, or a bot with **no signal at all**, means that
+  bot has no current review: report the gap and don't present its findings as
+  current — absence is never approval. Its earlier findings may still be worth
+  triaging, under the staleness rule below.
 - Establish which comments are **actionable now**: skip resolved threads
   (the REST responses carry no resolution state — read each thread's
   `isResolved` with the GraphQL thread query in
@@ -234,38 +253,18 @@ explicit confirmation first.
   one when the pushed changes warrant it (new or reworked logic, fixes to
   Major findings, changes that could plausibly have introduced new defects)
   and wait for the user's confirmation before posting.
-- **Wait for the expected bots before re-checking.** A re-review takes
-  minutes; re-reading the comment surfaces immediately sees the stale
-  pre-review state and ends the loop early. After pushing (and any
-  triggers), wait for a fresh, **bot-specific completion signal** from each
-  bot a pass is expected from — those actually triggered, plus those this
-  PR's history shows auto-re-reviewing pushes — and only those, before the
-  next load pass. Use each bot's documented signal: the `Cursor Bugbot` CI
-  check for Bugbot, the review submission for CodeRabbit. **"Fresh" means
-  bound to the current head commit where the signal carries a commit
-  binding, and later than the push otherwise** — never merely recent when
-  the binding is available. Take the head the *bots* see —
-  `gh pr view --json headRefOid -q .headRefOid`, not `git rev-parse HEAD`,
-  which diverges in detached or merge checkouts and whenever local commits
-  aren't pushed yet — and check what the signal itself says it covers: a
-  review submission carries `commit_id`, a CI check reports against a SHA,
-  and bot comments usually name the commit reviewed; only when none of
-  those exist does the timestamp rule apply — later than the push, and
-  later than the **most recent** trigger comment when any were posted, so
-  an earlier cycle's trigger can't admit a stale signal. Without this check, a pass from *before* the
-  push reads as done and the loop reloads exactly the stale state this step
-  exists to avoid. This freshness check and the actionability filter in
-  step 1 answer different questions and neither replaces the other: the
-  wait decides *when* there is anything new to look at, the filter decides
-  *what* in that set still needs acting on. Bound the wait
-  for **every** expected bot: if its signal hasn't appeared within ~15
-  minutes, do one load pass with whatever is there and tell the user the
-  bot hasn't responded, rather than stalling indefinitely. Then repeat the load → triage →
-  resolve loop, bounded — after two or three rounds, or as soon as new
-  findings are judgement calls rather than defects, stop and hand the
-  remainder to the user instead of chasing an empty pass. Reviewers that
-  generate opinions indefinitely are the user's to silence, not yours to
-  satisfy.
+- **Wait before re-checking when the loop continues.** A re-review takes
+  minutes, so reloading immediately reads the pre-review state as final.
+  After pushing (and any triggers), wait for a current signal — step 1's
+  test — from each bot a pass is expected from: those triggered, plus those
+  this PR's history shows auto-re-reviewing pushes, and only those. Bound
+  it: if a bot's signal hasn't appeared within ~15 minutes, do one load pass
+  with what's there and tell the user which bot is missing rather than
+  stalling. Then repeat load → triage → resolve, bounded — after two or
+  three rounds, or as soon as new findings are judgement calls rather than
+  defects, stop and hand the remainder to the user instead of chasing an
+  empty pass. Reviewers that generate opinions indefinitely are the user's
+  to silence, not yours to satisfy.
 - Report back to the user: each comment's verdict and disposition, what was
   pushed, and anything deliberately not done — a rejected suggestion or a
   deferred decision is part of the outcome, not a footnote.

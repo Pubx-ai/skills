@@ -23,6 +23,22 @@ history and fix issues without a round-trip through review. So the goal isn't a
 generic checklist; it's to judge the branch against how *this* codebase actually
 works and catch what would bite a reviewer — or production — later.
 
+## 0. Run it with fresh eyes when you can
+
+If subagents are available, prefer dispatching this review to one and acting on its
+returned findings. Two things are bought: **independence** — a fresh context reads
+the branch cold, without the authoring session's assumptions, which is what makes a
+review gate worth having — and **context economy**, since a whole-branch review
+reads many files, and a subagent burns its own context and returns only the
+findings, keeping the main session lean. The dispatch is read-only and single-shot —
+it may run read-only inspection commands (diffs, file reads) but changes no files.
+**Give the subagent this skill, not a vague ask**: include these instructions (or
+point at this file), the resolved base,
+and the exact diff scope in the dispatch prompt, and require the report to meet the
+output contract below — findings anchored to file paths and line numbers, the 0–10
+score, and the recommendation. Stay same-session when subagents aren't available or
+the branch diff is trivial.
+
 ## 1. Determine the base branch
 
 The base is the branch this work will merge back into. When the caller passes one

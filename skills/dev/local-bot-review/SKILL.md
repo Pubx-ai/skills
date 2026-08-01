@@ -21,6 +21,25 @@ rate-limited re-review. This complements — never replaces — the agent-reason
 `local-review` and `local-pr-review` judge code against the repo's own conventions and context;
 the bot casts a wider, pattern-trained net. Different eyes catch different bugs.
 
+## Run it in a subagent when you can
+
+If subagents are available, prefer dispatching this whole skill — prerequisite checks,
+the CLI run, and the triage — to one, and acting on its returned verdicts. The bot
+already supplies independent eyes; what the dispatch adds is unbiased **triage**
+(findings verified against the code without the authoring session's assumptions) and
+**context economy** — the CLI output and per-finding verification reads stay in the
+subagent, which returns only the verdicts. Ownership is explicit on this path: the
+**subagent runs section 1's prerequisite checks first** and, if any fail, stops
+before `cr review` and returns the prerequisite report as its result. The dispatch
+is read-only: it changes no files, and fixes happen back in this session after the
+report. Then the loop continues here — apply section 4's fix/re-run cycle (each
+re-run may be a fresh dispatch or same-session) under its round bound, and section
+5's report covers the whole cycle. Include these instructions (or point at this
+file) and the intended scope flags in the dispatch prompt, and require per-finding
+verdicts (confirmed / rejected-with-reasoning / deferred) plus the exact command
+run. Stay same-session when subagents aren't available or the diff under review is
+trivial.
+
 ## Invariants
 
 These hold on every path through this skill, delegated or not:

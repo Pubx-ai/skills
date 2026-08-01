@@ -35,10 +35,12 @@ is read-only: it changes no files, and fixes happen back in this session after t
 report. Then the loop continues here — apply section 4's fix/re-run cycle (each
 re-run may be a fresh dispatch or same-session) under its round bound, and section
 5's report covers the whole cycle. Include these instructions (or point at this
-file) and the intended scope flags in the dispatch prompt, and require per-finding
-verdicts (confirmed / rejected-with-reasoning / deferred) plus the exact command
-run. Stay same-session when subagents aren't available or the diff under review is
-trivial.
+file) and the intended scope flags in the dispatch prompt — **together with an
+explicit boundary that overrides section 4 for the subagent**: its triage stops at
+verdicts; the fixing and re-running that section 4 describes belong to the calling
+session, and the file alone says otherwise. Require per-finding verdicts
+(confirmed / rejected-with-reasoning / deferred) plus the exact command run. Stay
+same-session when subagents aren't available or the diff under review is trivial.
 
 ## Invariants
 

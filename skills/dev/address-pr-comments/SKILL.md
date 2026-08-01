@@ -63,8 +63,10 @@ gh api --paginate repos/{owner}/{repo}/pulls/{n}/reviews    # review submissions
 items, silently dropping the rest on comment-heavy PRs.
 
 - Use `--jq` to pull out `id`, `user.login`, `path`, `line`, `created_at`,
-  `in_reply_to_id`, and `body`; write large outputs to a scratch file rather
-  than flooding context.
+  `in_reply_to_id`, `commit_id`, and `body`; write large outputs to a scratch
+  file rather than flooding context. Keep `commit_id` — inline comments and
+  review submissions both carry it, and it's the commit binding the
+  staleness and freshness rules below are checked against.
 - Establish which comments are **actionable now**: skip resolved threads
   (the REST responses carry no resolution state — read each thread's
   `isResolved` with the GraphQL thread query in
@@ -77,6 +79,14 @@ items, silently dropping the rest on comment-heavy PRs.
   code, not by assuming. When unsure whether a comment is boilerplate,
   answered, or superseded, keep it in the actionable list rather than
   skipping it.
+- **Unresolved is not the same as current.** A finding whose commit binding
+  predates the head — an earlier round's thread that was never resolved, or
+  a rejection left open — is a claim about *older* code: keep it actionable,
+  but re-verify it against the head before acting, since the lines it
+  describes may already have changed. Resolution state says whether anyone
+  settled the thread; the commit it was written against says what it was
+  looking at. Neither answers whether it still holds — only re-verification
+  against the current code does.
 - **Check for bot status notices while filtering** — boilerplate to skip,
   but not to ignore. CodeRabbit marks a skipped pass with
   `rate limited by coderabbit.ai` inside its auto-generated top-level
@@ -231,7 +241,23 @@ explicit confirmation first.
   bot a pass is expected from — those actually triggered, plus those this
   PR's history shows auto-re-reviewing pushes — and only those, before the
   next load pass. Use each bot's documented signal: the `Cursor Bugbot` CI
-  check for Bugbot, the review submission for CodeRabbit. Bound the wait
+  check for Bugbot, the review submission for CodeRabbit. **"Fresh" means
+  bound to the current head commit where the signal carries a commit
+  binding, and later than the push otherwise** — never merely recent when
+  the binding is available. Take the head the *bots* see —
+  `gh pr view --json headRefOid -q .headRefOid`, not `git rev-parse HEAD`,
+  which diverges in detached or merge checkouts and whenever local commits
+  aren't pushed yet — and check what the signal itself says it covers: a
+  review submission carries `commit_id`, a CI check reports against a SHA,
+  and bot comments usually name the commit reviewed; only when none of
+  those exist does the timestamp rule apply — later than the push, and
+  later than the **most recent** trigger comment when any were posted, so
+  an earlier cycle's trigger can't admit a stale signal. Without this check, a pass from *before* the
+  push reads as done and the loop reloads exactly the stale state this step
+  exists to avoid. This freshness check and the actionability filter in
+  step 1 answer different questions and neither replaces the other: the
+  wait decides *when* there is anything new to look at, the filter decides
+  *what* in that set still needs acting on. Bound the wait
   for **every** expected bot: if its signal hasn't appeared within ~15
   minutes, do one load pass with whatever is there and tell the user the
   bot hasn't responded, rather than stalling indefinitely. Then repeat the load → triage →

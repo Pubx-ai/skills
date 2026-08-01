@@ -42,6 +42,14 @@ session, and the file alone says otherwise. Require per-finding verdicts
 (confirmed / rejected-with-reasoning / deferred) plus the exact command run. Stay
 same-session when subagents aren't available or the diff under review is trivial.
 
+**Blocked by policy is not the same as unavailable.** Some sessions permit
+subagents but instruct that they only be used when the user asks. That is a
+decision to surface, not a reason to quietly downgrade the gate: say the review
+would be stronger run with fresh eyes, ask whether to dispatch one, and wait for
+the answer. If they agree, dispatch exactly as this section describes; if they
+decline, run it same-session — a weakened gate the user chose is fine; one they
+never heard about is not.
+
 ## Invariants
 
 These hold on every path through this skill, delegated or not:
@@ -55,7 +63,10 @@ These hold on every path through this skill, delegated or not:
 - **The fix/re-review loop is bounded**: after two or three rounds, or when new findings are
   judgement calls rather than defects, stop and hand the remainder to the user — this bound
   overrides any "repeat until clean" instruction in a delegated workflow.
-- The review runs **one-shot and non-interactive**; it never modifies the working tree itself.
+- The review runs **one-shot and non-interactive**, with one named exception:
+  the policy-gate confirmation above may ask the user whether to dispatch and
+  wait for the answer, then the review resumes one-shot. It never modifies the
+  working tree itself.
 
 ## 1. Check prerequisites first
 

@@ -62,7 +62,7 @@ Delegation covers the loop, not the guarantees. These invariants apply no
 matter which loop runs, and win over anything the delegated skill says to the
 contrary:
 
-- execution defaults strongly to **same-session** — dispatch tasks to
+- execution defaults strongly to **same-session** — dispatch implementation tasks to
   subagents only when the user explicitly requests it or agrees to a
   proposal: if the plan's shape makes dispatch look clearly beneficial
   (large, independent, numerous tasks), propose it with the trade-off and

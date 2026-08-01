@@ -22,6 +22,29 @@ nothing is in history yet and the author still has full context. So the goal isn
 to run a generic checklist; it's to judge these changes against how *this* codebase
 actually works and catch the things that would bite later.
 
+## 0. Run it with fresh eyes when you can
+
+If subagents are available, prefer dispatching this review to one and acting on its
+returned findings: a fresh context reads the diff cold, without the authoring
+session's assumptions — and that independence is most of what a review gate buys,
+since the session that wrote the code "knows what it meant", which is exactly what
+a reviewer must not assume. The dispatch is read-only and single-shot — it may run
+read-only inspection commands (diffs, file reads) but changes no files. Two
+conditions make it worth having:
+
+- **The subagent gets this skill, not a vague ask.** Include these instructions
+  (or point at this file) and the exact diff scope in the dispatch prompt, and
+  require the report to meet the output contract below — findings anchored to
+  file paths and line numbers, a 0–10 score, and a recommendation. A bare
+  "review my changes" dispatch produces a generic review and silently degrades
+  the gate.
+- **Repeated runs change the economics.** When this review gates every commit in
+  a longer workflow, the dispatch cost repeats each time — honour the user's
+  speed-vs-rigour preference there, keeping the small commits same-session.
+
+Stay same-session when subagents aren't available or the change is trivial (a
+few lines), where dispatch overhead outweighs the fresh eyes.
+
 ## 1. Gather all local changes
 
 Work from the real changes, not an assumption about what changed. You want the full

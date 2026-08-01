@@ -22,28 +22,38 @@ nothing is in history yet and the author still has full context. So the goal isn
 to run a generic checklist; it's to judge these changes against how *this* codebase
 actually works and catch the things that would bite later.
 
-## 0. Run it with fresh eyes when you can
+## 0. Same-session by default
 
-If subagents are available, prefer dispatching this review to one and acting on its
-returned findings: a fresh context reads the diff cold, without the authoring
-session's assumptions — and that independence is most of what a review gate buys,
-since the session that wrote the code "knows what it meant", which is exactly what
-a reviewer must not assume. The dispatch is read-only and single-shot — it may run
-read-only inspection commands (diffs, file reads) but changes no files. Two
-conditions make it worth having:
+Run this review in the current session. It is the pre-commit gate, so it fires
+often — frequently once per commit across a longer piece of work — on diffs that
+are usually small and freshly written. Dispatching each of those to a subagent
+pays the context rebuild every time (the reviewer must re-read conventions,
+neighbouring code, and the diff from nothing) for changes the session can already
+see, and it slows the tight loop where fast feedback is the point.
 
-- **The subagent gets this skill, not a vague ask.** Include these instructions
-  (or point at this file) and the exact diff scope in the dispatch prompt, and
-  require the report to meet the output contract below — findings anchored to
-  file paths and line numbers, a 0–10 score, and a recommendation. A bare
-  "review my changes" dispatch produces a generic review and silently degrades
-  the gate.
-- **Repeated runs change the economics.** When this review gates every commit in
-  a longer workflow, the dispatch cost repeats each time — honour the user's
-  speed-vs-rigour preference there, keeping the small commits same-session.
+**Reach for a subagent when the change is big enough to be worth cold eyes** —
+many files, unfamiliar territory, a change the session has been deep inside for a
+long time, or when the user asks for maximum independence. A fresh context reads
+the diff without the authoring session's assumptions, and the session that wrote
+the code "knows what it meant", which is exactly what a reviewer must not assume.
+The dispatch is read-only and single-shot: it may run read-only inspection
+commands (diffs, file reads) but changes no files.
 
-Stay same-session when subagents aren't available or the change is trivial (a
-few lines), where dispatch overhead outweighs the fresh eyes.
+When you do dispatch, **the subagent gets this skill, not a vague ask**: include
+these instructions (or point at this file) and the exact diff scope in the
+dispatch prompt, and require the report to meet the output contract below —
+findings anchored to file paths and line numbers, a 0–10 score, and a
+recommendation. A bare "review my changes" dispatch produces a generic review and
+silently degrades the gate.
+
+**Blocked by policy is not the same as unavailable.** Some sessions permit
+subagents but instruct that they only be used when the user asks. When this
+review warrants cold eyes and that restriction applies, surface the decision
+rather than quietly taking the weaker path: say the review would be stronger run
+with fresh eyes, ask whether to dispatch one, and wait for the answer. If they
+agree, dispatch exactly as this section describes; if they decline, review
+same-session — a weakened gate the user chose is fine; one they never heard
+about is not.
 
 ## 1. Gather all local changes
 

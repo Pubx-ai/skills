@@ -209,23 +209,31 @@ explicit confirmation first.
   rejected **Major** finding is never agent-resolved: that disagreement is
   exactly what a human must adjudicate, so its thread stays open until a
   person closes it.
-- **Suggest a re-review; never trigger one yourself.** In this org,
-  CodeRabbit usually re-reviews pushed commits automatically but is
-  rate-limited, so it sometimes needs a manual nudge; Bugbot is configured
-  to **never** re-review automatically (cost control), so a fresh Bugbot
-  pass always requires the trigger. The trigger comments —
+- **Suggest a re-review; never trigger one yourself.** Whether a bot
+  re-reviews pushed commits on its own is configuration, not a constant —
+  check whether this PR's earlier pushes drew fresh reviews, and act on
+  what you find: a bot that has been auto-re-reviewing needs no trigger
+  (expect its fresh pass after the push, and wait for it); a bot that
+  hasn't — or a PR with no push history yet to tell — gets a fresh pass
+  only via its trigger. CodeRabbit typically re-reviews pushes
+  automatically but is rate-limited, so it sometimes needs a manual nudge;
+  Bugbot is commonly configured **not** to re-review automatically (cost
+  control), in which case a fresh Bugbot pass always requires the trigger. The trigger comments —
   `@coderabbitai review` and `bugbot run` — request a fresh pass, and each
   costs a full bot run. Posting them is always the user's call: recommend
   one when the pushed changes warrant it (new or reworked logic, fixes to
   Major findings, changes that could plausibly have introduced new defects)
   and wait for the user's confirmation before posting.
-- **Wait for the triggered bots before re-checking.** A triggered re-review
-  takes minutes; re-reading the comment surfaces immediately sees the stale
-  pre-review state and ends the loop early. After a trigger, wait for a
-  fresh review submission (newer than the trigger comment) from **each bot
-  that was actually triggered** — and only those — before the next load
-  pass. Bound the wait: if a triggered bot hasn't produced a review within
-  ~15 minutes, do one load pass with whatever is there and tell the user the
+- **Wait for the expected bots before re-checking.** A re-review takes
+  minutes; re-reading the comment surfaces immediately sees the stale
+  pre-review state and ends the loop early. After pushing (and any
+  triggers), wait for a fresh, **bot-specific completion signal** from each
+  bot a pass is expected from — those actually triggered, plus those this
+  PR's history shows auto-re-reviewing pushes — and only those, before the
+  next load pass. Use each bot's documented signal: the `Cursor Bugbot` CI
+  check for Bugbot, the review submission for CodeRabbit. Bound the wait
+  for **every** expected bot: if its signal hasn't appeared within ~15
+  minutes, do one load pass with whatever is there and tell the user the
   bot hasn't responded, rather than stalling indefinitely. Then repeat the load → triage →
   resolve loop, bounded — after two or three rounds, or as soon as new
   findings are judgement calls rather than defects, stop and hand the

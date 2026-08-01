@@ -30,8 +30,7 @@ baseline (2) in hand: strategy designed blind of the project's facts is the
 failure mode this ordering exists to prevent. If it's not available, use the
 inline fallback in section 3.
 
-Either way, these house rules — the defaults this plugin enforces, distilled
-from the team's repos — apply on top of whatever the strategy says:
+Either way, these house rules apply on top of whatever the strategy says:
 
 - **Determinism boundary**: unit suites must run with no network, no model
   calls, no live services — that work belongs in separated integration/eval

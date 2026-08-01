@@ -14,10 +14,10 @@ description: >
 
 # Local Bot Review
 
-Get CodeRabbit's findings on local changes *before* they reach a PR. The bot that reviews this
-org's PRs today is the same one behind the CLI, so running it locally shifts its findings left:
-issues get fixed for the cost of a local run instead of a push, a PR round-trip, and a
-rate-limited re-review. This complements — never replaces — the agent-reasoned gates:
+Get CodeRabbit's findings on local changes *before* they reach a PR. Where CodeRabbit also
+reviews the pull requests, the CLI is the same reviewer run early — so a local pass shifts its
+findings left: issues get fixed for the cost of a local run instead of a push, a PR round-trip,
+and a metered re-review. This complements — never replaces — the agent-reasoned gates:
 `local-review` and `local-pr-review` judge code against the repo's own conventions and context;
 the bot casts a wider, pattern-trained net. Different eyes catch different bugs.
 

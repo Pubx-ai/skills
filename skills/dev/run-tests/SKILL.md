@@ -81,7 +81,7 @@ Work down this ladder and stop at the first hit:
    `poetry.lock` → `poetry run`. A bare `pytest` or `npx vitest` in a
    managed project is how the wrong environment gets tested.
 
-Per-stack detection signals and the team's known quirks are in
+Per-stack detection signals and known quirk patterns are in
 [`references/detection.md`](references/detection.md) — consult it when the
 ladder's answer is ambiguous.
 
@@ -157,6 +157,6 @@ starting infrastructure silently.
 | Match the package manager to the lockfile | The wrong PM tests the wrong environment |
 | Check the stack is up before `docker compose exec` wrappers | `exec` needs a running container; cold checkouts fail confusingly |
 | A named subset → filter; never run the full suite for one test | Wasted minutes and noisy output bury the signal |
-| Skipping/disabling a failing test is never the fix | Universal rule across this org's repos |
+| Skipping/disabling a failing test is never the fix | It hides the failure instead of fixing it — the suite goes green while the defect stays |
 | Report the suite that ran, not the one that was asked about | Filtered/partial runs must be labelled as such |
 | Use one-shot mode, never watch mode | Bare `vitest`/`jest --watch` never exits; the run hangs |

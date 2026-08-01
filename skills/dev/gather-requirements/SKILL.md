@@ -77,9 +77,9 @@ Pace the interview adaptively:
   that". If the environment provides a structured question tool, present the recommended
   answer as the first option and mark it as recommended; otherwise state it inline.
 
-**Support skills for the interview.** This phase was shaped by two skills worth
-borrowing from directly when they're available in the session — for technique only;
-this skill's output contract (the requirements document below) always wins:
+**Support skills for the interview.** Two skills are worth borrowing from directly
+when they're available in the session — for technique only; this skill's output
+contract (the requirements document below) always wins:
 
 - **interview-me** — the one-question-at-a-time discipline of digging for what the
   user *actually* wants rather than what they think they should want; reach for it

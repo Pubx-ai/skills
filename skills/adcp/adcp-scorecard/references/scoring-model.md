@@ -122,7 +122,13 @@ Across follow-up rounds: evidence is append-only (later rounds never delete earl
 references), and an authorised re-run supersedes that test's previous status for gate purposes
 **only when it completes** with `PASS` or `FAIL`. A `BLOCKED` or `INCONCLUSIVE` re-run adds
 evidence but leaves the prior completed result standing — in particular, it can never lift a
-gate out of `FAIL`. A gate's status aggregates **all** tests mapped to it: `PASS` requires every
+gate out of `FAIL`. A prior completed result is carried forward only when the evaluation
+context is unchanged — same agent and protocol version, tooling, tenant and configuration,
+environment and operating mode, authorised scope, and decision bars (the evaluation-context
+fingerprint); when any of it has changed, keep the old evidence for audit but mark the gate
+`UNVERIFIED` until re-established under the current context — and report a `FAIL` superseded
+this way as a critical finding, never silently dropped. A gate's status aggregates **all**
+tests mapped to it: `PASS` requires every
 mandatory mapped test to currently pass, and any current `FAIL` on one mapped test keeps the
 gate `FAIL` regardless of the others (Tests 1 and 2 both guard transaction safety — a passing
 re-run of one never clears the other). Gates move `FAIL` → `PASS` only through a passing

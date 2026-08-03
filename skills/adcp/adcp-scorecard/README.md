@@ -10,7 +10,7 @@ A decision report with a weighted 0–100 score across 12 criteria, a status for
 hard safety gates (transaction safety, identity/trust, privacy/compliance, approval/spend
 controls, measurement/reconciliation), and one final status: `REJECT`, `HOLD`, `BOUNDED PILOT`,
 `LIMITED PRODUCTION`, or `PREFERRED`. Hard gates override the number — a 90/100 with one failed
-gate is still a `REJECT`.
+gate still cannot ship: `REJECT`, or `HOLD` at best when a remediation has been accepted.
 
 ## Quick start (no agent needed): scorecard-only
 
@@ -18,9 +18,12 @@ If you just want a desk evaluation from documentation and supplied evidence:
 
 > "Run the AdCP scorecard in scorecard-only mode for [your use case]."
 
-No agent is contacted. Expect every hard gate to come back `UNVERIFIED` and the decision to be
-`HOLD` — that is by design: a documentation review can never set a gate to `PASS`. Use this to
-find out *which* pilot tests matter most for your context.
+No agent is contacted. Expect the hard gates to come back `UNVERIFIED` and the decision to be
+`HOLD` — that is by design: a documentation review can never set a gate to `PASS`. The one
+exception: observable evidence you supply from a prior authorised pilot round of the same
+implementation merges under the scoring model's follow-up-round rules — and can then move gate
+statuses and the final decision beyond `HOLD` (a merged prior `FAIL` can mean `REJECT`). Use
+this mode to find out *which* pilot tests matter most for your context.
 
 ## Full run: pilot tests against a real agent
 
@@ -73,8 +76,9 @@ ready. Tests whose inputs are missing are marked `BLOCKED`, never improvised:
 - **Maximum permitted financial exposure** (smallest cap that still exercises the flow)
 - Allowed test entities (accounts, brands, campaigns) and whether synthetic data is required
 - Approval requirements and who the **test owner** is
-- The **emergency-stop / cancellation mechanism** — the skill verifies it works *before* any
-  financial-mutation test
+- The **emergency-stop / cancellation mechanism** and its **agreed maximum stop latency** — the
+  skill verifies the mechanism works *before* any financial-mutation test, and Test 12 measures
+  against the latency you declare
 - Log/trace locations and where evidence should be stored
 
 ### 3. Start the evaluation
@@ -119,7 +123,9 @@ per-test results, critical findings, and the smallest safe next step.
 
 - `HOLD` with `UNVERIFIED` gates → the named tests still need to run (or re-run unblocked).
 - `BOUNDED PILOT` → gates passed in sandbox; the gap to production is listed evidence, not vibes.
-- Any gate `FAIL` → `REJECT` regardless of the weighted score; remediation goes in the report.
+- Any gate `FAIL` with no accepted remediation → `REJECT` regardless of the weighted score; with
+  an accepted remediation the status is `HOLD` pending a passing re-test. Either way the number
+  never overrides the gate.
 
 Typical follow-up: fix what blocked a test, then ask for a re-run of just those tests — results
 merge into the same scorecard.

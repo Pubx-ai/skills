@@ -71,8 +71,12 @@ sandbox → scorecard-only), state the downgrade in the report, and mark the aff
 Protocol/implementation name and versions; agent endpoint and authentication method; available
 operations; environment (local, sandbox, staging, production); test account or tenant; allowed
 test entities; maximum permitted financial exposure; whether mutations are allowed; whether
-synthetic data is required; approval requirements; emergency-stop mechanism; log and trace
-locations; expected counterparties; test owner; evidence storage location.
+synthetic data is required; approval requirements; emergency-stop mechanism **and its agreed
+maximum stop latency** — a finite duration with units, measured from accepted stop request to
+rejection of a new spend-affecting mutation (the control interval Test 12 verifies against); log
+and trace
+locations; expected counterparties; test owner; evidence storage location (operator-attested as
+access-restricted, with defined retention/deletion rules).
 
 Where a required input is missing, mark the affected tests `BLOCKED`. **Do not invent
 credentials, endpoints, capabilities, identifiers, or authorization.**
@@ -110,7 +114,13 @@ credentials, endpoints, capabilities, identifiers, or authorization.**
     obligation. Retry a mutation only with the *same* `idempotency_key`, only after the
     idempotency preflight (see the pilot-test suite) confirmed replay support, and under the
     same approval gate as the original call; otherwise record `INCONCLUSIVE` and reconcile
-    read-only. Never leave a test spinning.
+    read-only. Before recording a **mutation** `INCONCLUSIVE`, capture its operation/task
+    identifier, attempt an authorised stop or cancellation, and **block further mutation tests**
+    until the operation reaches a terminal or reconciled state — the wait bound limits the
+    evaluator's waiting, not the operation's side effects. If no identifier could be captured
+    (lost response), the same block applies: record reconciliation as unresolved and reconcile
+    out-of-band (read-back by natural keys) before any further mutation. Never leave a test
+    spinning.
 
 If any safety prerequisite is missing, downgrade the test to dry-run, simulation, or inspection —
 and say so in the results.
@@ -121,7 +131,8 @@ and say so in the results.
    constraints. Confirm the operating mode with the user. In a non-interactive run, these
    confirmations cannot be gathered: default to scorecard-only mode with the default weights and
    disclose that in the report. No decision bars are declared in such a run, so
-   `LIMITED PRODUCTION` and `PREFERRED` are unreachable — with every hard gate `UNVERIFIED`,
+   `LIMITED PRODUCTION` and `PREFERRED` are unreachable and prior-round carry-forward can never
+   bind (context-binding requires matching declared bars) — with every hard gate `UNVERIFIED`,
    the decision status is `HOLD`.
 2. **Fix the weights and the decision bars.** Confirm the default weights in
    [references/scoring-model.md](references/scoring-model.md) or record the evaluator's changes —
@@ -134,8 +145,14 @@ and say so in the results.
    [references/scoring-model.md](references/scoring-model.md), scoring 1–5 from the strongest
    available evidence and recording confidence per criterion. Use
    [references/adcp-baseline.md](references/adcp-baseline.md) as the starting point, adjusted for
-   what the live docs and supplied evidence actually show. In scorecard-only mode, all hard gates
-   remain `UNVERIFIED` — a documentation review can never set a gate to `PASS`.
+   what the live docs and supplied evidence actually show. In scorecard-only mode, hard gates
+   remain `UNVERIFIED` — a documentation review can never set a gate to `PASS`. One exception:
+   supplied observable evidence from a prior authorised pilot round of the *same* implementation
+   merges under the follow-up-round rules in the scoring model (including its context-binding
+   requirement) rather than being discarded — typically a prior report in the output-contract
+   format, with evidence lineage and evidence-store references. Resolve those references and
+   verify the underlying evidence before reuse; a report whose references cannot be verified
+   leaves the affected gates `UNVERIFIED`. Arbitrary supplied artifacts still set nothing.
 4. **Run pilot tests** (sandbox or controlled live mode only) per
    [references/pilot-tests.md](references/pilot-tests.md), then update scores and gate statuses
    per the score-updating rules in the scoring model. A hard gate may only receive `PASS` on

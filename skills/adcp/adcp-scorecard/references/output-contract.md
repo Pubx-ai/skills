@@ -25,7 +25,10 @@ follow-up pilot rounds and cross-protocol comparisons can consume earlier report
   what counts as representative conditions, and the operational controls expected in place —
   that the final status was judged against
 - The controlled evidence-store location (from the required inputs) holding the raw, unredacted
-  evidence — required before any evidence capture
+  evidence — required before any evidence capture, and confirmed by the operator as
+  access-restricted with defined retention/deletion rules; "controlled" is their attestation to
+  record, not a label to assume — record who attested, when, and the policy or evidence
+  reference backing it
 - The prior evaluation rounds this report builds on (evidence lineage), so consumers can verify
   append-only evidence and status supersession
 - Docs provenance: whether the live AdCP docs were fetched, which pages, and the docs build

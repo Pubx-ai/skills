@@ -35,16 +35,28 @@ SKILL.md's safety rules (same `idempotency_key`, confirmed replay support, appro
 an automatic retry. An `INCONCLUSIVE` recorded at the wait bound is re-checkable —
 re-poll later and update the result; slow async completion (e.g. a task parked in
 `status:'submitted'` awaiting human approval on the counterparty side) is not itself a failure.
-Do not infer that a control exists simply because the happy path succeeds.
+For a mutation, `INCONCLUSIVE` is not the end of the obligation: capture the operation/task
+identifier, attempt an authorised stop or cancellation, and run no further mutation tests until
+it reaches a terminal or reconciled state (safety rules in SKILL.md) — re-polling later must
+not be the only control, and mutation tests still blocked when the run ends are recorded
+`BLOCKED`. Do not infer that a control exists simply because the happy path
+succeeds.
 
 **Ordering constraint:** the tests below may otherwise run in any order, but verify that the
 emergency-stop or cancellation mechanism works **before** the first mutation test (safety rule in
-SKILL.md); Test 12 then formalises the evidence for it. If the stop mechanism cannot be verified,
-mutation tests are downgraded to dry-run or marked `BLOCKED` — not run on hope.
+SKILL.md); Test 12 then formalises the evidence for it. That preflight verification must itself
+be non-spend: use a dry-run, a sandbox-account workflow, or a non-financial entity — never a
+real financial commitment. If the stop mechanism cannot be verified without spend, mutation
+tests are downgraded to dry-run or marked `BLOCKED` — not run on hope.
 
-**Idempotency preflight (before Tests 1–2):** read `get_adcp_capabilities` and check
-`adcp.idempotency.supported`. From the same response, record the agent's **declared AdCP
-versions** (`adcp.major_versions`, plus any finer-grained version fields the response carries)
+**Idempotency preflight (before Tests 1–2):** read `get_adcp_capabilities` and validate the
+full idempotency declaration, not just the boolean — when `supported` is `true`, check the
+accompanying fields the current schema defines (e.g. a replay TTL) and use them to shape the
+replay test's timing. A schema-invalid declaration (e.g. `supported: true` without a valid
+replay TTL) means replay semantics cannot be trusted: record Tests 1–2 `BLOCKED` and the
+invalid declaration itself as a conformance finding feeding the transaction-safety gate. From
+the same response, record the agent's **declared AdCP versions** (`adcp.major_versions`, plus
+any finer-grained version fields the response carries)
 and read the **`request_signing` capability block** — judge signing enforcement from that block,
 not from version inference: majors alone cannot tell you whether 3.1's mutating-call signing
 mandate applies (3.0 permits bearer-only). When neither the block nor a release-precision

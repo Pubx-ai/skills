@@ -55,3 +55,7 @@ total is not an approval to transact real spend.
 - AdCP known limitations (explicit gaps, deferred capabilities):
   https://docs.adcontextprotocol.org/docs/reference/known-limitations
 - AdCP media buy (lifecycle, reporting surface): https://docs.adcontextprotocol.org/docs/media-buy
+- `@adcp/sdk` on npm — maintained SDK evidence for the runnable-implementation row (as of
+  August 2026): https://www.npmjs.com/package/@adcp/sdk
+- Official reference implementation and buyer skills (as of August 2026):
+  https://github.com/adcontextprotocol/adcp

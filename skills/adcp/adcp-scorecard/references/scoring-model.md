@@ -2,7 +2,8 @@
 
 The weighted rubric, hard-gate mechanics, evidence standards, and score-updating rules for the
 adcp-scorecard skill. Weights may be changed to reflect the evaluator's operating context, but any
-changes must be made **before any criterion is scored**, and must still total 100%.
+changes must be made **before any criterion is scored**. Every weight is a non-negative percentage
+below 100%, and the weights must total exactly 100%.
 
 ## Criteria
 
@@ -113,5 +114,17 @@ trigger pilot tests.
   a maximum of 3 or 4, depending on realism and completeness; a 5 requires credible evidence at
   the evaluator's required scale.
 - A failed hard-gate test sets the relevant gate to `FAIL`.
-- A blocked or inconclusive test normally leaves the gate `UNVERIFIED`.
+- A blocked or inconclusive test leaves the gate `UNVERIFIED` when the test has no prior
+  completed result; it never overwrites one.
 - Do not infer that a control exists simply because the happy path succeeds.
+
+Across follow-up rounds: evidence is append-only (later rounds never delete earlier evidence
+references), and an authorised re-run supersedes that test's previous status for gate purposes
+**only when it completes** with `PASS` or `FAIL`. A `BLOCKED` or `INCONCLUSIVE` re-run adds
+evidence but leaves the prior completed result standing — in particular, it can never lift a
+gate out of `FAIL`. A gate's status aggregates **all** tests mapped to it: `PASS` requires every
+mandatory mapped test to currently pass, and any current `FAIL` on one mapped test keeps the
+gate `FAIL` regardless of the others (Tests 1 and 2 both guard transaction safety — a passing
+re-run of one never clears the other). Gates move `FAIL` → `PASS` only through a passing
+re-test after remediation — never by re-interpreting old evidence — and every report lists the
+prior rounds it builds on.

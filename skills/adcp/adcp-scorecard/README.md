@@ -34,11 +34,11 @@ Everything a pilot run needs, in one list:
    npx skills@latest add pubx-ai/skills -s adcp-scorecard
    ```
 
-2. **Node.js ≥ 18** with `npx` on PATH (the pilot calls run via `npx @adcp/sdk@latest`; the CLI
+2. **Node.js ≥ 20** with `npx` on PATH (the pilot calls run via `npx @adcp/sdk@latest`; the CLI
    is fetched and cached on first use — no global install):
 
    ```bash
-   node --version    # must be >= 18
+   node --version    # must be >= 20
    ```
 
 3. **A sandboxed or test AdCP agent** to point at. Never start with production. For a local
@@ -49,7 +49,7 @@ Everything a pilot run needs, in one list:
 6. **The official AdCP buyer skills** installed (preferred source of call mechanics):
 
    ```bash
-   npx skills add adcontextprotocol/adcp --skill call-adcp-agent,adcp-media-buy
+   npx skills add adcontextprotocol/adcp --skill call-adcp-agent --skill adcp-media-buy
    ```
 
    Add the task skill for whichever surface you're testing (`adcp-signals`, `adcp-creative`,
@@ -57,10 +57,11 @@ Everything a pilot run needs, in one list:
    the skill falls back to fetching their `SKILL.md` files from GitHub, then to direct
    `npx @adcp/sdk` calls.
 
-7. **Sanity-check connectivity** before involving the evaluator:
+7. **Sanity-check connectivity** before involving the evaluator (the env prefix keeps the token
+   out of process arguments — no separate export needed):
 
    ```bash
-   npx @adcp/sdk@latest http://localhost:3001/mcp get_adcp_capabilities '{}' --auth <TOKEN> --json
+   ADCP_AUTH_TOKEN=<TOKEN> npx @adcp/sdk@latest http://localhost:3001/mcp get_adcp_capabilities '{}' --json
    ```
 
 ### 2. Decide the test envelope
@@ -85,7 +86,10 @@ Example prompt:
 > the emergency stop is pausing the campaign via `update_media_buy`. Store evidence in
 > `./scorecard-evidence/`."
 
-Supply the bearer token when asked — avoid pasting it into shared or logged chats.
+The agent URL and bearer token are session inputs like the mode and spend cap — include them in
+the kickoff prompt or hand them over when the skill asks once. It passes the token to CLI calls
+via a per-command environment prefix, never `--auth` argv. Use test-tenant tokens; keep
+production credentials out of shared or logged chats.
 
 ### 4. What happens during the run
 

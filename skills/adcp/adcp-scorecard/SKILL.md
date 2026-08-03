@@ -74,9 +74,11 @@ credentials, endpoints, capabilities, identifiers, or authorization.**
 2. **Confirm the sandbox isolation boundary before any mutation test — never take the label on
    trust.** A sandbox claim is confirmed by the protocol's own mechanics (capability declaration,
    sandbox account reference, sandbox-confirmed responses — pre-flight checklist in
-   [references/pilot-tests.md](references/pilot-tests.md)) plus operator confirmation that the
-   tenant is separate and no real counterparty is reachable. Unconfirmed → mutation tests are
-   downgraded to dry-run or marked `BLOCKED`.
+   [references/pilot-tests.md](references/pilot-tests.md)) **plus** operator confirmation that
+   the tenant is separate and no real counterparty is reachable. The protocol signals are
+   self-attested by the agent under test, so the operator confirmation is the independent leg
+   and is required, not optional. Unconfirmed → mutation tests are downgraded to dry-run or
+   marked `BLOCKED`.
 3. Use synthetic campaigns, counterparties, creatives, identities, and measurement data where
    possible. Never use real personal data unless explicitly authorised and necessary.
 4. Never attempt to bypass authentication, authorization, approval, privacy, or compliance
@@ -94,8 +96,12 @@ credentials, endpoints, capabilities, identifiers, or authorization.**
    infrastructure. Stop immediately when observed behaviour exceeds the authorised scope.
 9. Preserve enough evidence to reconstruct every action taken.
 10. Bound every wait: give an async operation ~15 minutes before recording the test
-   `INCONCLUSIVE`; retry a flaky call at most twice before doing the same. Never leave a test
-   spinning.
+    `INCONCLUSIVE`. Automatic retries (at most two) apply to **read-only calls only** — a timed
+    out mutation may already have committed, so retrying it can create a second financial
+    obligation. Retry a mutation only with the *same* `idempotency_key`, only after the
+    idempotency preflight (see the pilot-test suite) confirmed replay support, and under the
+    same approval gate as the original call; otherwise record `INCONCLUSIVE` and reconcile
+    read-only. Never leave a test spinning.
 
 If any safety prerequisite is missing, downgrade the test to dry-run, simulation, or inspection —
 and say so in the results.
@@ -105,10 +111,16 @@ and say so in the results.
 1. **Establish context.** Use case, environment, protocol and agent versions, authorised scope,
    constraints. Confirm the operating mode with the user. In a non-interactive run, these
    confirmations cannot be gathered: default to scorecard-only mode with the default weights and
-   disclose that in the report.
-2. **Fix the weights.** Confirm the default weights in
+   disclose that in the report. No decision bars are declared in such a run, so
+   `LIMITED PRODUCTION` and `PREFERRED` are unreachable — with every hard gate `UNVERIFIED`,
+   the decision status is `HOLD`.
+2. **Fix the weights and the decision bars.** Confirm the default weights in
    [references/scoring-model.md](references/scoring-model.md) or record the evaluator's changes —
-   weights must total 100% and must be fixed *before* any criterion is scored.
+   weights must total 100% and must be fixed *before* any criterion is scored. Record at the same
+   time the evaluator's decision bars: the weighted-score bar, the required scale, what counts
+   as representative conditions, and the operational controls expected to be in place — the
+   bars `LIMITED PRODUCTION` and `PREFERRED` will be judged against. The final statuses are
+   audited against these declared bars, not against universal constants.
 3. **Score provisionally.** Work through the criteria in
    [references/scoring-model.md](references/scoring-model.md), scoring 1–5 from the strongest
    available evidence and recording confidence per criterion. Use
@@ -135,8 +147,11 @@ Work down this list and use the first eligible option for the mechanics of calli
    `adcp-creative`, `adcp-governance`, `adcp-brand`, or `adcp-si` for their surfaces. When they
    are not installed, their `SKILL.md` files can be fetched from that repository and used as
    reference material.
-2. **Direct calls** with `npx @adcp/sdk@latest <url> <tool> '<json>' --auth <token> --json`
-   (Node ≥ 18), or whatever client the user supplies.
+2. **Direct calls** with `npx @adcp/sdk@latest <url> <tool> '<json>' --json` (Node ≥ 20), or
+   whatever client the user supplies. Expect the agent URL and bearer token from the user's
+   invocation — ask once if missing, reuse for the session, never invent them. Pass the token
+   per-command as an environment prefix (`ADCP_AUTH_TOKEN=<token> npx …`) rather than
+   `--auth <token>` — argv is visible in process listings and shell history.
 3. When no client can reach the agent at all, fall back to scorecard-only mode, mark the tests
    `BLOCKED`, and report the reason.
 
@@ -167,7 +182,10 @@ Produce exactly one final status:
 
 A high weighted score never overrides a failed or unverified hard gate. A hard gate marked
 `NOT APPLICABLE` with an explicit written justification counts as satisfied for these rules;
-without the justification it counts as `UNVERIFIED`.
+without the justification it counts as `UNVERIFIED`. "Weighted decision profile", "representative
+conditions", and "required scale" are the decision bars declared in workflow step 2:
+`LIMITED PRODUCTION` and `PREFERRED` may only be claimed by citing those declared bars and the
+evidence that meets them, and the report records the bars in its Evaluation Context.
 
 ## Comparing AdCP with another protocol
 

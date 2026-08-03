@@ -29,7 +29,9 @@ For each test:
 9. Update the related score and hard-gate status only when justified by the result.
 
 Bound the run: async operations get ~15 minutes before the test is recorded `INCONCLUSIVE`;
-retry a flaky call at most twice. An `INCONCLUSIVE` recorded at the wait bound is re-checkable —
+retry a flaky **read-only** call at most twice — mutations follow the mutation-retry rule in
+SKILL.md's safety rules (same `idempotency_key`, confirmed replay support, approval gate), never
+an automatic retry. An `INCONCLUSIVE` recorded at the wait bound is re-checkable —
 re-poll later and update the result; slow async completion (e.g. a task parked in
 `status:'submitted'` awaiting human approval on the counterparty side) is not itself a failure.
 Do not infer that a control exists simply because the happy path succeeds.
@@ -39,11 +41,20 @@ emergency-stop or cancellation mechanism works **before** the first mutation tes
 SKILL.md); Test 12 then formalises the evidence for it. If the stop mechanism cannot be verified,
 mutation tests are downgraded to dry-run or marked `BLOCKED` — not run on hope.
 
+**Idempotency preflight (before Tests 1–2):** read `get_adcp_capabilities` and check
+`adcp.idempotency.supported`. If it is not `true`, the `idempotency_key` is a no-op and a
+duplicate submit creates a second real mutation — do **not** send the duplicate: the gate's own
+question ("are financial mutations retry-safe?") is already answered, so record the
+transaction-safety gate `FAIL` citing the capability response (unless the deployment documents a
+compensating dedup control — then test that instead). If the capability cannot be read, record
+Tests 1–2 `BLOCKED`.
+
 ## Sandbox isolation pre-flight (sandbox mode only)
 
 Before the first mutation test, confirm the isolation boundary instead of trusting the
 environment's label. AdCP makes sandbox **account-level and verifiable** (mechanics as of the
-AdCP 3.0.22 media-buy sandbox page — re-verify via the live docs index before relying on them):
+media-buy sandbox page in the live docs, August 2026 — locate it fresh via
+https://docs.adcontextprotocol.org/llms.txt and re-verify before relying on them):
 
 1. **Capability**: `get_adcp_capabilities` declares `account.sandbox: true`. Not declared or
    `false` → the seller does not support protocol sandbox; do not treat the deployment as
@@ -51,16 +62,21 @@ AdCP 3.0.22 media-buy sandbox page — re-verify via the live docs index before 
 2. **Account reference**: every request must carry sandbox semantics on the account itself —
    implicit account model (`require_operator_auth: false`): natural key with `sandbox: true`
    (declared via `sync_accounts`); explicit model (`require_operator_auth: true`): a sandbox
-   `account_id` discovered via `list_accounts` filtered with `sandbox: true`.
-3. **Response confirmation**: run one read-only call (e.g. `get_products`) on the sandbox
-   account and check the success response includes `sandbox: true`. During tests, a mutation
-   response *without* that confirmation means isolation cannot be confirmed: stop mutations and
-   record it as a finding (the spec says sellers SHOULD include it).
+   `account_id` discovered via `list_accounts` filtered with `sandbox: true`, or supplied
+   through the seller's documented out-of-band test-account setup. Either way, record the
+   account's provenance (who supplied it, how it was verified as a test account).
+3. **Response confirmation**: run one read-only call (e.g. `get_products`, preferring a
+   synchronous discovery mode such as `buying_mode: "wholesale"` where the seller supports it —
+   brief-driven modes may go async) on the sandbox account and check the success response
+   includes `sandbox: true`. During tests, a mutation response *without* that confirmation means
+   isolation cannot be confirmed: stop mutations and record it as a finding (the spec says
+   sellers SHOULD include it).
 4. **No header reliance**: never treat the deprecated `X-Dry-Run` / `X-Test-Session-ID` /
    `X-Mock-Time` headers as isolation — the spec forbids buyers relying on them; only the
    account-level sandbox reference guarantees sandbox semantics.
 5. **Operator confirmation**: the tenant is separate from production and no real counterparty
-   is reachable from it. This is an operator-supplied fact — record who confirmed it.
+   is reachable from it. Checks 1–4 are self-attested by the agent under test; this one is the
+   independent leg and is required — record who confirmed it.
 
 If any check fails or cannot be run: mutation tests are downgraded to `dry_run: true` where the
 task supports it (sync tasks), otherwise marked `BLOCKED`; and a "sandbox" that produces a real

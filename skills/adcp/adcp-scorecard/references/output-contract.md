@@ -28,8 +28,8 @@ follow-up pilot rounds and cross-protocol comparisons can consume earlier report
   evidence — required before any evidence capture
 - The prior evaluation rounds this report builds on (evidence lineage), so consumers can verify
   append-only evidence and status supersession
-- Docs provenance: whether the live AdCP docs were fetched, and which pages; disclose any
-  fallback to the dated baseline
+- Docs provenance: whether the live AdCP docs were fetched, which pages, and the docs build
+  version the stable paths resolved to; disclose any fallback to the dated baseline
 
 ## 3. Scorecard
 

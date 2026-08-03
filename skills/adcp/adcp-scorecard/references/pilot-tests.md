@@ -6,8 +6,9 @@ precede and govern every step here.
 
 Most tests name an **AdCP mapping**: the task or mechanism an AdCP implementation typically
 exercises for that behaviour. Mappings are orientation, not spec — verify the current task names
-and field semantics against the live docs (https://docs.adcontextprotocol.org/llms.txt) before
-building the test payloads. When the official AdCP buyer skills are available (installed, or
+and field semantics against the live docs (the llms.txt index plus the stable `docs/<page>`
+paths — SKILL.md, Ground truth) before building the test payloads. When the official AdCP buyer
+skills are available (installed, or
 fetched from https://github.com/adcontextprotocol/adcp/tree/main/skills), load `call-adcp-agent`
 plus the task skill for the surface under test (e.g. `adcp-media-buy`) for current payload
 semantics — under the invariants in SKILL.md, which control the `idempotency_key` during tests.
@@ -42,7 +43,14 @@ SKILL.md); Test 12 then formalises the evidence for it. If the stop mechanism ca
 mutation tests are downgraded to dry-run or marked `BLOCKED` — not run on hope.
 
 **Idempotency preflight (before Tests 1–2):** read `get_adcp_capabilities` and check
-`adcp.idempotency.supported`. If it is not `true`, the `idempotency_key` is a no-op and a
+`adcp.idempotency.supported`. From the same response, record the agent's **declared AdCP
+versions** (`adcp.major_versions`, plus any finer-grained version fields the response carries)
+and read the **`request_signing` capability block** — judge signing enforcement from that block,
+not from version inference: majors alone cannot tell you whether 3.1's mutating-call signing
+mandate applies (3.0 permits bearer-only). When neither the block nor a release-precision
+version is available, the signing expectation is unknown — leave the affected gate reasoning
+`UNVERIFIED` rather than assuming. If `adcp.idempotency.supported` is not `true`, the
+`idempotency_key` is a no-op and a
 duplicate submit creates a second real mutation — do **not** send the duplicate: the gate's own
 question ("are financial mutations retry-safe?") is already answered, so record the
 transaction-safety gate `FAIL` citing the capability response (unless the deployment documents a
@@ -53,8 +61,10 @@ Tests 1–2 `BLOCKED`.
 
 Before the first mutation test, confirm the isolation boundary instead of trusting the
 environment's label. AdCP makes sandbox **account-level and verifiable** (mechanics as of the
-media-buy sandbox page in the live docs, August 2026 — locate it fresh via
-https://docs.adcontextprotocol.org/llms.txt and re-verify before relying on them):
+media-buy sandbox page in the live docs, August 2026 — locate it fresh via the docs index
+plus the stable `docs/<page>` paths (SKILL.md, Ground truth), following the media-buy page's
+own links to the sandbox page rather than inventing an unlisted URL, and re-verify before
+relying on them):
 
 1. **Capability**: `get_adcp_capabilities` declares `account.sandbox: true`. Not declared or
    `false` → the seller does not support protocol sandbox; do not treat the deployment as

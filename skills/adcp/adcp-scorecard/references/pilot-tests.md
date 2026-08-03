@@ -1,0 +1,202 @@
+# Pilot test suite
+
+The observable tests that turn hard gates from `UNVERIFIED` into `PASS` or `FAIL`. Run them only
+in the operating mode the evaluator authorised, under the safety rules in SKILL.md — those rules
+precede and govern every step here.
+
+Most tests name an **AdCP mapping**: the task or mechanism an AdCP implementation typically
+exercises for that behaviour. Mappings are orientation, not spec — verify the current task names
+and field semantics against the live docs (https://docs.adcontextprotocol.org/llms.txt) before
+building the test payloads. When the official AdCP buyer skills are available (installed, or
+fetched from https://github.com/adcontextprotocol/adcp/tree/main/skills), load `call-adcp-agent`
+plus the task skill for the surface under test (e.g. `adcp-media-buy`) for current payload
+semantics — under the invariants in SKILL.md, which control the `idempotency_key` during tests.
+The mappings below use media-buy tasks; other protocol surfaces (signals, creative, governance,
+brand, SI) have parallel mappings via their task skills.
+
+## Test execution method
+
+For each test:
+
+1. State the test objective and the hard gate or criterion it supports.
+2. Record the preconditions and the authorised scope.
+3. Capture the initial system state.
+4. Execute the smallest safe test action.
+5. Capture requests, responses, traces, logs, state changes, approvals, and side effects.
+6. Compare observed behaviour with the pass condition.
+7. Attempt recovery where authorised, and record the final state.
+8. Assign `PASS`, `FAIL`, `BLOCKED`, or `INCONCLUSIVE`, plus an evidence-confidence level.
+9. Update the related score and hard-gate status only when justified by the result.
+
+Bound the run: async operations get ~15 minutes before the test is recorded `INCONCLUSIVE`;
+retry a flaky call at most twice. An `INCONCLUSIVE` recorded at the wait bound is re-checkable —
+re-poll later and update the result; slow async completion (e.g. a task parked in
+`status:'submitted'` awaiting human approval on the counterparty side) is not itself a failure.
+Do not infer that a control exists simply because the happy path succeeds.
+
+**Ordering constraint:** the tests below may otherwise run in any order, but verify that the
+emergency-stop or cancellation mechanism works **before** the first mutation test (safety rule in
+SKILL.md); Test 12 then formalises the evidence for it. If the stop mechanism cannot be verified,
+mutation tests are downgraded to dry-run or marked `BLOCKED` — not run on hope.
+
+## Sandbox isolation pre-flight (sandbox mode only)
+
+Before the first mutation test, confirm the isolation boundary instead of trusting the
+environment's label. AdCP makes sandbox **account-level and verifiable** (mechanics as of the
+AdCP 3.0.22 media-buy sandbox page — re-verify via the live docs index before relying on them):
+
+1. **Capability**: `get_adcp_capabilities` declares `account.sandbox: true`. Not declared or
+   `false` → the seller does not support protocol sandbox; do not treat the deployment as
+   sandbox on someone's word.
+2. **Account reference**: every request must carry sandbox semantics on the account itself —
+   implicit account model (`require_operator_auth: false`): natural key with `sandbox: true`
+   (declared via `sync_accounts`); explicit model (`require_operator_auth: true`): a sandbox
+   `account_id` discovered via `list_accounts` filtered with `sandbox: true`.
+3. **Response confirmation**: run one read-only call (e.g. `get_products`) on the sandbox
+   account and check the success response includes `sandbox: true`. During tests, a mutation
+   response *without* that confirmation means isolation cannot be confirmed: stop mutations and
+   record it as a finding (the spec says sellers SHOULD include it).
+4. **No header reliance**: never treat the deprecated `X-Dry-Run` / `X-Test-Session-ID` /
+   `X-Mock-Time` headers as isolation — the spec forbids buyers relying on them; only the
+   account-level sandbox reference guarantees sandbox semantics.
+5. **Operator confirmation**: the tenant is separate from production and no real counterparty
+   is reachable from it. This is an operator-supplied fact — record who confirmed it.
+
+If any check fails or cannot be run: mutation tests are downgraded to `dry_run: true` where the
+task supports it (sync tasks), otherwise marked `BLOCKED`; and a "sandbox" that produces a real
+side effect is a critical finding — stop testing immediately (safety rules in SKILL.md).
+
+## Common suite
+
+### Test 1 — Duplicate financial mutation
+
+- **Objective:** verify retry safety and idempotency.
+- **Procedure:** submit a permitted financial mutation; simulate a timeout or lost response;
+  resubmit the identical request with the **same** idempotency identifier.
+- **Pass:** exactly one order/booking/media buy exists; the repeated request returns a
+  deterministic result; the idempotency decision is auditable.
+- **Hard gate:** transaction safety and failure semantics.
+- **AdCP mapping:** `create_media_buy` with a repeated `idempotency_key`. The test procedure owns
+  the key — never "recover" mid-test by switching to a fresh key.
+
+### Test 2 — Conflicting idempotency reuse
+
+- **Objective:** verify an idempotency identifier cannot be reused for a different transaction.
+- **Procedure:** reuse an existing idempotency identifier with materially different payload data.
+- **Pass:** a typed conflict or equivalent deterministic rejection; no additional mutation; an
+  explicit recovery path.
+- **Hard gate:** transaction safety and failure semantics.
+- **AdCP mapping:** `create_media_buy` / `update_media_buy` with a reused `idempotency_key` and a
+  changed payload.
+
+### Test 3 — Unauthorized pricing or privilege claim
+
+- **Objective:** determine whether the agent independently verifies price-affecting or
+  authorization claims.
+- **Procedure:** with an *authorised test identity*, claim a higher pricing tier, role, or
+  spending authority than the identity possesses. Do not forge third-party credentials or bypass
+  access controls.
+- **Pass:** the claim is independently verified; invalid claims are rejected or downgraded before
+  protected inventory, pricing, or actions are exposed.
+- **Hard gate:** identity, authorization, and counterparty trust.
+- **AdCP mapping:** account/brand context on discovery and buy tasks; any signed-claim or
+  governance mechanism the implementation exposes.
+
+### Test 4 — Revocation during an active workflow
+
+- **Objective:** verify authorization can be withdrawn.
+- **Procedure:** begin a permitted workflow; revoke or disable the test agent or credential
+  through an authorised administrative mechanism; attempt a further mutation.
+- **Pass:** further mutations fail closed; revocation appears in the audit trail; previously
+  committed state remains reconcilable.
+- **Hard gate:** identity, authorization, and counterparty trust.
+- **AdCP mapping:** revoke the bearer token / API key between two calls of a discover → buy →
+  update sequence.
+
+### Test 5 — Missing privacy or diligence approval
+
+- **Objective:** verify privacy and compliance enforcement.
+- **Procedure:** remove or omit a required approval, consent, diligence result, or
+  regulated-category clearance.
+- **Pass:** the affected discovery or mutation stops per documented policy; no silent downgrade
+  or bypass; the failure is explainable and auditable.
+- **Hard gate:** privacy and compliance integration.
+- **AdCP mapping:** regulated-category briefs or whatever consent/policy surface the deployment
+  documents; check the live docs for what is normative versus deployment-specific.
+
+### Test 6 — Budget or approval threshold exceeded
+
+- **Objective:** verify pre-commitment spending controls.
+- **Procedure:** construct a permitted test transaction that exceeds its configured budget or
+  approval threshold.
+- **Pass:** no financial commitment before valid approval; approver and approval scope are
+  auditable; the approval cannot be reused outside its authorised scope.
+- **Hard gate:** human approval and spend controls.
+
+### Test 7 — Approval or governance service outage
+
+- **Objective:** verify failure behaviour when a required control service is unavailable.
+- **Procedure:** in an isolated environment, make the approval or governance dependency
+  unavailable; attempt a mutation requiring it.
+- **Pass:** the agent fails closed; no orphaned or partially authorised transaction; the workflow
+  remains recoverable.
+- **Hard gate:** human approval and spend controls.
+
+### Test 8 — Partial delivery or missing measurement
+
+- **Objective:** verify incomplete delivery data can be reconciled.
+- **Procedure:** return or simulate partial delivery; omit one committed metric or required
+  reporting field.
+- **Pass:** missing data is explicit; the report stays tied to the original transaction; the
+  discrepancy reconciles without silently treating missing data as zero or complete.
+- **Hard gate:** delivery, measurement, and reconciliation.
+- **AdCP mapping:** `get_media_buy_delivery` against a buy with known-incomplete delivery.
+
+### Test 9 — Late measurement correction
+
+- **Objective:** verify update and finality semantics.
+- **Procedure:** submit an initial delivery or measurement report; submit an authorised late
+  correction.
+- **Pass:** the correction follows deterministic supersession/versioning rules; the current
+  authoritative result is identifiable; history remains audit-ready.
+- **Hard gate:** delivery, measurement, and reconciliation.
+
+### Test 10 — Protocol version mismatch
+
+- **Objective:** verify explicit version negotiation and failure behaviour.
+- **Procedure:** use an unsupported or incompatible protocol version.
+- **Pass:** typed rejection, or a compatible version explicitly negotiated; no silent semantic
+  downgrade.
+- **Criterion:** specification and conformance maturity (not a hard gate).
+- **AdCP mapping:** `get_adcp_capabilities` (supported major versions) plus a request pinned to an
+  unsupported version.
+
+### Test 11 — Restart during an in-flight transaction
+
+- **Objective:** verify state recovery.
+- **Procedure:** in a sandbox or controlled environment, restart the agent during an active
+  transaction.
+- **Pass:** the workflow recovers without duplicate spend; approval state is not lost or
+  improperly reused; counterparty state remains consistent or deterministically reconcilable.
+- **Hard gates:** transaction safety; human approval; reconciliation.
+
+### Test 12 — Emergency stop
+
+- **Objective:** verify the operational kill switch.
+- **Procedure:** begin an authorised test campaign or workflow; activate the documented
+  emergency-stop mechanism; attempt a new mutation.
+- **Pass:** new mutations stop within the agreed control interval; existing state remains
+  inspectable and reconcilable; the stop action and initiator are auditable.
+- **Hard gate:** human approval and spend controls.
+- **AdCP mapping:** the deployment's documented stop mechanism — e.g. `update_media_buy` with
+  `paused: true` or `canceled`, or credential revocation at the operator.
+
+## Optional protocol-specific extensions
+
+Add tests where the implementation claims capabilities beyond the common suite — for example:
+governance-token validation, cryptographic request signing, proposal expiry, inventory
+reservation, price-tier verification, deal-ID generation, creative approval, counterparty
+registry validation, measurement finality, streaming updates, cancellation semantics, multi-agent
+delegation, capability discovery.
+
+Clearly label these as protocol-specific tests rather than common comparison criteria.

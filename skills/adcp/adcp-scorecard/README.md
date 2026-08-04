@@ -79,7 +79,9 @@ ready. Tests whose inputs are missing are marked `BLOCKED`, never improvised:
 - The **emergency-stop / cancellation mechanism** and its **agreed maximum stop latency** — the
   skill verifies the mechanism works *before* any financial-mutation test, and Test 12 measures
   against the latency you declare
-- Log/trace locations and where evidence should be stored
+- Log/trace locations and where evidence should be stored — keep the evidence directory out
+  of version control (gitignore it, or use a path outside the repo): raw responses land there
+  unredacted
 
 ### 3. Start the evaluation
 

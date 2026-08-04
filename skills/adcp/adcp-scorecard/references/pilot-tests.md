@@ -24,10 +24,18 @@ For each test:
 3. Capture the initial system state.
 4. Execute the smallest safe test action.
 5. Capture requests, responses, traces, logs, state changes, approvals, and side effects.
-6. Compare observed behaviour with the pass condition.
-7. Attempt recovery where authorised, and record the final state.
-8. Assign `PASS`, `FAIL`, `BLOCKED`, or `INCONCLUSIVE`, plus an evidence-confidence level.
-9. Update the related score and hard-gate status only when justified by the result.
+6. Where the test mutated state, and only once the mutation reports an actual **terminal**
+   state, **read the mutated entity back and verify the change applied — accepted is not
+   applied.** A terminal success whose read-back shows no change, or a revision bump with no
+   observable difference, is a silent-downgrade finding, never a pass. The wait bound is not a
+   terminal state: a task still pending there is never read back for a verdict — it goes to the
+   `INCONCLUSIVE`/reconcile path below, where read-backs serve reconciliation. When no
+   read-back surface exists (or the test itself revoked the credentials needed to read), record
+   the verification as unavailable and cap the evidence confidence accordingly.
+7. Compare observed behaviour with the pass condition.
+8. Attempt recovery where authorised, and record the final state.
+9. Assign `PASS`, `FAIL`, `BLOCKED`, or `INCONCLUSIVE`, plus an evidence-confidence level.
+10. Update the related score and hard-gate status only when justified by the result.
 
 Bound the run: async operations get ~15 minutes before the test is recorded `INCONCLUSIVE`;
 retry a flaky **read-only** call at most twice — mutations follow the mutation-retry rule in
@@ -41,6 +49,20 @@ it reaches a terminal or reconciled state (safety rules in SKILL.md) — re-poll
 not be the only control, and mutation tests still blocked when the run ends are recorded
 `BLOCKED`. Do not infer that a control exists simply because the happy path
 succeeds.
+
+**Canonical opening sequence** (resolves the stop-verification/first-buy circularity):
+`get_adcp_capabilities` (record versions, idempotency declaration, signing block) → account
+setup and read-only sandbox probe (isolation pre-flight below) → create the smallest authorised
+buy as the stop-verification workflow. The non-spend constraint below binds this creation, and
+in **sandbox mode the sandbox account itself is the non-spend workflow**; in live mode a media
+buy has no non-spend create path (`dry_run` exists only on sync tasks, and a buy is never a
+non-financial entity), so the ordering constraint applies as written — the stop is unverifiable
+without spend and mutation tests are downgraded or `BLOCKED`. → Verify the emergency stop on
+the buy with a **reversible** mechanism (pause), then resume it and read it back before any
+replay test — a terminal stop (cancel, revocation) consumes the fixture; when only terminal
+stops exist, verify the stop last or on a separate authorised fixture, and a consumed fixture
+means the replay tests run on a fresh authorised buy or are `BLOCKED`. → Proceed to the replay
+tests, or, when the idempotency preflight blocks them, to the next authorised test.
 
 **Ordering constraint:** the tests below may otherwise run in any order, but verify that the
 emergency-stop or cancellation mechanism works **before** the first mutation test (safety rule in
@@ -165,6 +187,10 @@ side effect is a critical finding — stop testing immediately (safety rules in 
 ### Test 6 — Budget or approval threshold exceeded
 
 - **Objective:** verify pre-commitment spending controls.
+- **Precondition:** a spend threshold *below* the evaluator's authorised cap must exist —
+  a seller-side limit, a deployment approval layer, or a configurable account ceiling. Without
+  one, the test cannot be constructed inside the authorization; record `BLOCKED` naming this
+  missing precondition rather than a generic reason.
 - **Procedure:** construct a permitted test transaction that exceeds its configured budget or
   approval threshold.
 - **Pass:** no financial commitment before valid approval; approver and approval scope are

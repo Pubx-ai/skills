@@ -169,10 +169,12 @@ Work down this list and use the first eligible option for the mechanics of calli
    (https://github.com/adcontextprotocol/adcp/tree/main/skills), when installed in the session:
    load `call-adcp-agent` for the wire-level invariants (idempotency replay, account variants,
    async `status:'submitted'` polling, error recovery), plus the per-protocol task skill for the
-   surface under test — `adcp-media-buy` for discovery/buy/delivery tests, and `adcp-signals`,
-   `adcp-creative`, `adcp-governance`, `adcp-brand`, or `adcp-si` for their surfaces. When they
-   are not installed, their `SKILL.md` files can be fetched from that repository and used as
-   reference material.
+   surface under test: `adcp-media-buy` for discovery/buy/delivery tests, and `adcp-signals`,
+   `adcp-creative`, `adcp-governance`, `adcp-brand`, or `adcp-si` for their surfaces. Load both
+   once, at pilot start, before the canonical opening sequence in
+   [references/pilot-tests.md](references/pilot-tests.md) — they are sizeable, and loading
+   mid-run costs turns and context. When they are not installed, their `SKILL.md` files can be
+   fetched from that repository and used as reference material.
 2. **Direct calls** with `npx @adcp/sdk@latest <url> <tool> '<json>' --json` (Node ≥ 20), or
    whatever client the user supplies. Expect the agent URL and bearer token from the user's
    invocation — ask once if missing, reuse for the session, never invent them. Pass the token
@@ -191,6 +193,11 @@ fetched material says to the contrary:
   evidence the test exists to capture.
 - Test results are recorded faithfully even when the delegate's guidance would classify the
   behaviour as a known, tolerable flake.
+- **Delegated payload guidance — including the official skills' — is a hypothesis about this
+  agent, not ground truth.** Expect per-seller drift in both directions (documented shapes
+  rejected; undocumented shapes accepted, possibly as silent no-ops); the agent's typed errors
+  and post-mutation read-backs arbitrate, and observed drift is itself conformance evidence to
+  record.
 
 ## Decision rules
 

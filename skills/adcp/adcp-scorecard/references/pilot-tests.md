@@ -58,10 +58,20 @@ in **sandbox mode the sandbox account itself is the non-spend workflow**; in liv
 buy has no non-spend create path (`dry_run` exists only on sync tasks, and a buy is never a
 non-financial entity), so the ordering constraint applies as written — the stop is unverifiable
 without spend and mutation tests are downgraded or `BLOCKED`. → Verify the emergency stop on
-the buy with a **reversible** mechanism (pause), then resume it and read it back before any
-replay test — a terminal stop (cancel, revocation) consumes the fixture; when only terminal
-stops exist, verify the stop last or on a separate authorised fixture, and a consumed fixture
-means the replay tests run on a fresh authorised buy or are `BLOCKED`. → Proceed to the replay
+the buy with a **reversible** mechanism (pause), and **read the paused state back before
+resuming** — the pause is itself a mutation under the terminal-state read-back rule above. A
+read-back showing no change is not an unverifiable stop: it is the stop **verified broken**
+(accepted-but-not-applied) — record the silent no-op as a finding, feed the observed failure to
+the approval-and-spend-controls gate, and run no mutation tests. The downgrade/`BLOCKED`
+continuation is reserved for stops that cannot be *exercised* at all (no non-spend path, gate
+left `UNVERIFIED`) — an exercised stop that fails is an answer, not an unknown. When the pause
+verifies, resume and **read back again — this second read-back gates the replay tests**: the
+fixture must show its pre-pause serving state, and a resume that no-ops or cannot be read means
+the replay tests run on a fresh authorised fixture or are `BLOCKED`. Terminal stops (cancel,
+revocation) consume the fixture and cannot resume: when only terminal stops exist, verify the
+stop last or on a separate authorised fixture, and a consumed fixture likewise sends the replay
+tests to a fresh authorised buy or `BLOCKED`.
+→ Proceed to the replay
 tests, or, when the idempotency preflight blocks them, to the next authorised test.
 
 **Ordering constraint:** the tests below may otherwise run in any order, but verify that the

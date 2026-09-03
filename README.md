@@ -13,7 +13,7 @@ Created by [pubXers](https://pubx.ai/our-team/) — a shared collection of agent
    ```
 
 2. Pick the skills you want and which coding agents to install them on.
-   **Make sure you select `/adcp` or `/dev`.**
+   **Make sure you select `/adcp`, `/adtech`, or `/dev`.**
 
 ## What's inside
 
@@ -21,10 +21,11 @@ Created by [pubXers](https://pubx.ai/our-team/) — a shared collection of agent
 
 Agent skills, installable via [skills.sh](https://skills.sh). Each skill lives in its own `<folder>/<skill-name>/SKILL.md`:
 
-| Folder                  | What it covers                                                                            |
-| :---------------------- | :---------------------------------------------------------------------------------------- |
-| [`adcp/`](skills/adcp/) | AdCP (Ad Context Protocol) skills — spec-conformance code review and more.                |
-| [`dev/`](skills/dev/)   | Development workflow skills — requirements gathering, implementation planning, and more. |
+| Folder                      | What it covers                                                                                   |
+| :-------------------------- | :----------------------------------------------------------------------------------------------- |
+| [`adcp/`](skills/adcp/)     | AdCP (Ad Context Protocol) skills — spec-conformance code review, readiness scorecard, and more. |
+| [`adtech/`](skills/adtech/) | AdTech practitioner Q&A — programmatic, header bidding, GAM, OpenRTB, agentic advertising.       |
+| [`dev/`](skills/dev/)       | Development workflow skills — requirements gathering, implementation planning, and more.         |
 
 Browse a folder to see the current set of skills — they evolve often.
 

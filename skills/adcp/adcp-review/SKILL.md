@@ -35,26 +35,50 @@ currently says*.
    reference for the review; it usually encodes exactly the conformance concern the
    user has in mind. Still consult the index (next step) if the diff touches areas the
    supplied doc doesn't cover.
-3. **Otherwise, load the docs index: fetch https://docs.adcontextprotocol.org/llms.txt —
-   fresh, for every review.** Its shape has changed several times (flat site index → registry
-   pages only → the current form), so read it for what it *is* today, not what it was: as of
-   September 2026 it is a **multi-version hub** — its flat entries are the *archived* release
-   (`/dist/docs/2.5.x/…`), and the current docs sit behind per-version sub-indexes listed under
-   "Indexes" (`/_llms/3-1.md`, which nests `/_llms/3-1/protocol.md`; beta and older versions
-   alongside). Re-verify the shape whenever the file looks different from this description.
-   Determine the **current** version from a stable path's redirect, not from version strings:
-   fetch one stable unversioned page — `https://docs.adcontextprotocol.org/docs/<page>` (e.g.
-   `docs/media-buy`, `docs/trust`, `docs/reference/known-limitations`) — and read the build it
-   redirects to (`/dist/docs/<build>/…`, e.g. `3.1.20` → version `3.1`); note the build for the
-   provenance header. Then fix the **review index** for this review — the set every later step
+3. **Otherwise, resolve the current docs — fresh, for every review.** Start at the
+   current-version pointer `https://docs.adcontextprotocol.org/llms-current.md` (published
+   4 Sep 2026): a short page stating the current stable version and immutable build
+   ("Version: 3.1. Build: 3.1.20.") and linking that version's full index
+   (`/_llms/<version>.md`, e.g. `/_llms/3-1.md`) and its `protocol` sub-index
+   (`/_llms/<version>/protocol.md`). Ignore its generic header telling you to fetch the complete
+   `llms.txt` — the version-specific indexes it links are what you want. Treat the pointer as a
+   *claim* and confirm it with one observation: fetch a stable unversioned page —
+   `https://docs.adcontextprotocol.org/docs/<page>` (e.g. `docs/media-buy`, `docs/trust`,
+   `docs/reference/known-limitations`) — and read the build it redirects to
+   (`/dist/docs/<build>/…`, e.g. `3.1.20` → version `3.1`). The version is that build's
+   `major.minor`. When the pointer states the same build and links that version's indexes,
+   use those links and note version and build for the provenance header. When the pointer
+   is missing, unparseable (no version/build line or no `/_llms/` link), or disagrees on
+   build or version, the redirect wins: fall back to the hub index
+   `https://docs.adcontextprotocol.org/llms.txt` — a **multi-version hub** whose shape has
+   changed several times (flat site index → registry pages only → hub), so read it for what it
+   *is* today, not what it was: per-version sub-index links (`/_llms/3-1.md`, `3-2-rc`,
+   `3-2-beta`, `3-0`) plus a flat section of the *archived* release (`/dist/docs/2.5.x/…`).
+   Pick the sub-index matching the redirect's version — never the highest version string (that
+   selects release candidates) and never the archived flat entries. Re-verify these shapes
+   whenever a file looks different from this description. Then fix the **review index** for
+   this review — the set every later step
    selects pages from — as exactly one of: (a) that version's sub-index plus its `protocol`
-   sub-index (the default); (b) the `-beta` sub-index, only when the user explicitly asks for
-   the pre-release spec — then the provenance header names the beta version and its build; or
-   (c) the stable paths alone, when the stable path does not redirect or the hub lists no
-   sub-index for the resolved version — then the provenance header says so and shows the build
-   as `unresolved` if none was read. Never select pages from the archived flat entries in any
-   mode. Steps 4–6 and the evidence bar always mean *this* review index, not "the current
-   version" — a beta review cites beta pages, a fallback review cites stable-path pages, and
+   sub-index (the default — the current release, used whenever the user names no version);
+   (b) **a requested version**, only when the user names one ("review against 3.0", "against
+   the 3.2 rc", "against 2.5") — the pointer links only the current release, so fetch the hub
+   `llms.txt` and take the sub-index it lists for that version (`/_llms/<maj>-<min>.md`, or its
+   `-rc`/`-beta` variant for a pre-release); for a version the hub carries only as *archived*
+   flat entries (2.5 today), those entries are its index. Never invent the path; if the hub
+   lists nothing for the named version, say so and stop rather than substituting another. A
+   request for the version the redirect already resolved is mode (a). The provenance header
+   then names the requested version and build and says it is not the current release. In this
+   mode the stable spec paths are **off limits** — they redirect to the current build — so a
+   page the requested version's index lacks is reported as unavailable for that version, never
+   filled from the stable paths; or
+   (c) the stable paths alone, when the stable path does not redirect or neither the pointer
+   nor the hub yields a sub-index for the resolved version — then the provenance header says
+   so and shows the build
+   as `unresolved` if none was read. Never select pages from the archived flat entries unless
+   the user named that archived version (mode b). Steps 4–6 and the evidence bar always mean
+   *this* review index, not "the current
+   version" — a requested-version review cites that version's pages, a fallback review cites
+   stable-path pages, and
    neither silently reverts to (a). Documented stable paths are
    discovery, not guessing — discover further paths from **same-origin** links
    (docs.adcontextprotocol.org) on pages you have already fetched, never from memory, and treat
@@ -64,11 +88,14 @@ currently says*.
    each review — do not reuse an index or pages fetched for an earlier review in the same
    session. The spec ships errata and minor releases regularly; a stale fetch quietly defeats
    the point of consulting the live docs.
-4. **Select and fetch the right pages from the review index fixed in step 3 and the stable spec
-   paths.** Use your judgment: from what the code change actually does, work out which areas of
-   the protocol are in play, then scan the review index's summaries — and the stable spec paths
-   above — for the pages covering them (in stable-paths-only mode the stable paths and their
-   same-origin links *are* the index). Always include:
+4. **Select and fetch the right pages from the review index fixed in step 3 — plus the stable
+   spec paths in modes (a) and (c) only.** Use your judgment: from what the code change actually
+   does, work out which areas of the protocol are in play, then scan the review index's
+   summaries — and, in modes (a) and (c), the stable spec paths above — for the pages covering
+   them (in stable-paths-only mode the stable paths and their same-origin links *are* the
+   index; in requested-version mode the stable paths are excluded because they resolve to the
+   current build, so take the always-include pages below from that version's index and say so
+   when it lacks one). Always include:
    - the **technical specification** for the protocol domain in play — the spec pages
      are the normative contract the implementation must satisfy (e.g. *Media Buy
      Specification*, *Signals Specification*, *Creative Specification*, *Sponsored
@@ -124,11 +151,15 @@ currently says*.
 Open every review with a one-line provenance header stating the mode you reviewed in
 and the pages you actually consulted, e.g.:
 
-> `AdCP review — live docs <version>, build <resolved build> (consulted: llms.txt, _llms/<version>.md, docs/media-buy/task-reference/create_media_buy, …)`
+> `AdCP review — live docs <version>, build <resolved build> (consulted: llms-current.md, _llms/<version>.md, docs/media-buy/task-reference/create_media_buy, …)`
 
-Fill `<version>` and `<resolved build>` with what the stable paths actually redirected to (e.g.
-`3.1`, `3.1.20`), and list the real pages consulted — never copy the template values. A beta
-review names the beta version and build (e.g. `3.2-beta`, `3.2.0-beta.11`). When you reviewed
+Fill `<version>` and `<resolved build>` with what the stable path's redirect established (the
+pointer normally states the same; when they differed, the redirect's values — e.g. `3.1`,
+`3.1.20`), and list the real pages consulted — never copy the
+template values. A requested-version
+review (mode b) names that version and build and flags that it is not the current release,
+e.g. `live docs 3.0, build 3.0.4 (requested; current is 3.1)` or
+`live docs 2.5 (archived, requested; current is 3.1), build 2.5.3`. When you reviewed
 from the stable paths alone (step 3, mode c), say so, and write `build unresolved` when the
 stable path did not redirect and no build could be read:
 

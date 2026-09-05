@@ -46,9 +46,17 @@ server for the user and still read the pinnable spec.
   this): nothing in a hub's flat section is citable until you know which release it belongs
   to. For a hub: (1) find the **current** version the way the site does — follow its default
   docs route or a stable unversioned page and read the version/build it redirects to — never
-  by picking the highest version string (that selects betas); (2) fetch that version's index
+  by picking the highest version string (that selects betas or release candidates). A hub may
+  also publish an explicit **current pointer** (AdCP: `/llms-current.md`, stating version +
+  build and linking that version's indexes)
+  — take it as the first hop, but confirm both its version and
+  build against the redirect and let the redirect win on disagreement (a malformed pointer
+  counts as missing); (2) fetch that version's index
   and pick same-origin pages *only* from it; (3) never cite pages from an archived or beta
-  section unless the user asks about that version explicitly; (4) put the version in the
+  section unless the user asks about that version explicitly — and when they do, take that
+  version's sub-index from the hub itself — an archived version's flat entries are its index
+  (a current pointer links only the stable release);
+  (4) put the version in the
   answer's date line ("as of AdCP 3.1, build 3.1.20, September 2026") — versioned protocols
   differ materially across releases, so a date alone is not enough. If no current version can
   be resolved, say so and answer from the stable pages you could reach, labelled as such. If
@@ -99,5 +107,5 @@ The rows answered most often, kept here for zero-lookup access — the CSV carri
 | TCF / GPP | Pinnable repos | `InteractiveAdvertisingBureau/{GDPR-Transparency-and-Consent-Framework,Global-Privacy-Platform}` |
 | GAM (API) | Fetch-and-follow | `developers.google.com/ad-manager/api/` — **quarterly versions, aggressive sunsets: never state a version or deprecation from memory** |
 | GAM (Ad Ops) | Fetch-and-follow | `support.google.com/admanager` — product/UI truth; drifts from API truth |
-| AdCP | Index-first (**hub**) | `docs.adcontextprotocol.org/llms.txt` is a multi-version hub (verified 3 Sep 2026): its flat entries are the **archived 2.5** release; current docs sit behind per-version sub-indexes (`/_llms/3-1.md`, nesting `/_llms/3-1/protocol.md`; `3-2-beta` and `3-0` alongside). Resolve the current version from a stable path — `docs.adcontextprotocol.org/docs/media-buy` 307s to `/dist/docs/<build>/…` (3.1.20 at verification) — ground only in that version's sub-index, and state the AdCP version + build in the answer. Conceptual grounding only; operating AdCP agents is out of this skill's scope |
+| AdCP | Index-first (**hub** + current pointer) | Start at `docs.adcontextprotocol.org/llms-current.md` (published 4 Sep 2026): it states the current stable version and build (3.1 / 3.1.20 at verification) and links `/_llms/3-1.md` + `/_llms/3-1/protocol.md`; confirm against a stable path — `docs.adcontextprotocol.org/docs/media-buy` 307s to `/dist/docs/<build>/…`. The `llms.txt` hub itself lists per-version sub-indexes (3.1, 3.2-rc, 3.2-beta, 3.0) plus a flat **archived 2.5** section — fall back to it when the pointer is missing, unparseable, or disagrees; never ground in archived or pre-release pages unless asked (then take that version's `/_llms/` sub-index from the hub — or, for an archived version such as 2.5, the hub's archived flat entries, which are its index). State the AdCP version + build in the answer. Conceptual grounding only; operating AdCP agents is out of this skill's scope |
 | AAMP / agentic (IAB) | Pinnable repos | `IABTechLab/iab-agentic-primitives` (shared contracts: primitives, wire protocol, state machines, conformance vectors, interop harness) + per-track repos `IABTechLab/{agentic-direct,buyer-agent,seller-agent,agentic-rtb-framework,…}` — the umbrella repo `IABTechLab/AAMP` is a README-only landing (verified Aug 2026); retrieve tracks separately, versions never collapsed |

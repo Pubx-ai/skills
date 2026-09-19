@@ -1,0 +1,49 @@
+{
+  "skill_name": "adtech-expert",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "What is the current stable AdCP version and build?",
+      "expected_output": "A one-line answer naming the current stable version and build exactly as the live current-version pointer states them, with the pointer (or the stable-path redirect) cited as the source and the date of the check. Requires live network: offline runs fail the fetch expectations by design.",
+      "files": [],
+      "expectations": [
+        "The transcript shows, during the run, a successful pull of https://docs.adcontextprotocol.org/llms-current.md — recording the version and build the pointer declared — and either a stable-path redirect check or a page under https://docs.adcontextprotocol.org/dist/docs/<build>/ carrying the same build, via the web-fetch tool, shell curl, or a search followed by a fetch of the returned link. An answer grounded only in the bundled resource map, the CSV notes, or memory fails.",
+        "The final answer states the AdCP version and the build together, the build written exactly as the pointer states it, and dates the check (month and year at minimum).",
+        "The stated build equals the build the pointer declared as recorded in the run's own transcript. The grader never fetches the pointer at grading time, since a build can ship between run and grading; a transcript that lacks the pointer's declared build fails this expectation as unverifiable. This eval hardcodes no build.",
+        "Every docs.adcontextprotocol.org page the answer cites is llms-current.md, the llms.txt hub, an /_llms/ index for the stated version, a page under /dist/docs/<the stated build>/, or a stable unversioned /docs/<page> path cited as the redirect check. No archived-release or pre-release page (a /dist/docs/ path of a non-current build, or an /_llms/ index with an -rc or -beta suffix) is cited.",
+        "If the transcript shows no successful pull of the pointer or of a versioned page, the answer labels its AdCP claims as unverified and states no version or build as verified."
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "Does get_products return placement-level format options in AdCP?",
+      "expected_output": "Confirms the answer from the fetched get_products task-reference page for the current build, quoting or naming the page, and carries the version and build line. Does not answer from memory or from search snippets alone.",
+      "files": [],
+      "expectations": [
+        "The transcript shows, during the run, a successful pull of https://docs.adcontextprotocol.org/llms-current.md — recording the version and build the pointer declared — and either a stable-path redirect check or a page under https://docs.adcontextprotocol.org/dist/docs/<build>/ carrying the same build, via the web-fetch tool, shell curl, or a search followed by a fetch of the returned link. An answer grounded only in the bundled resource map, the CSV notes, or memory fails.",
+        "The final answer states the AdCP version and the build together, the build written exactly as the pointer states it, and dates the check (month and year at minimum).",
+        "The stated build equals the build the pointer declared as recorded in the run's own transcript. The grader never fetches the pointer at grading time, since a build can ship between run and grading; a transcript that lacks the pointer's declared build fails this expectation as unverifiable. This eval hardcodes no build.",
+        "Every docs.adcontextprotocol.org page the answer cites is llms-current.md, the llms.txt hub, an /_llms/ index for the stated version, a page under /dist/docs/<the stated build>/, or a stable unversioned /docs/<page> path cited as the redirect check. No archived-release or pre-release page (a /dist/docs/ path of a non-current build, or an /_llms/ index with an -rc or -beta suffix) is cited.",
+        "If the transcript shows no successful pull of the pointer or of a versioned page, the answer labels its AdCP claims as unverified and states no version or build as verified.",
+        "The answer grounds its claim about placement-level format options in the fetched get_products task-reference page (quoted or named with its /dist/docs/<build>/ URL), not in memory, the bundled references, or search snippets.",
+        "The grader opens the cited get_products page; the answer's yes/no verdict matches what that page states about placement-level format_ids/format_options, and the answer names the section where they are defined."
+      ]
+    },
+    {
+      "id": 3,
+      "prompt": "A seller agent returned this product entry in a get_products response. Is this standard AdCP?\n\n```json\n{\n  \"product_id\": \"pub-ros-display\",\n  \"name\": \"Run of site display\",\n  \"format_options\": [],\n  \"yield_tier_hint\": \"premium\"\n}\n```",
+      "expected_output": "Checks each field against the fetched get_products task-reference or schema page for the current build. Confirms format_options from that page. For yield_tier_hint, either names the fetched page on which it is absent or labels the field unverified; never calls it non-standard or vendor-internal on sight. Carries the version and build line.",
+      "files": [],
+      "expectations": [
+        "The transcript shows, during the run, a successful pull of https://docs.adcontextprotocol.org/llms-current.md — recording the version and build the pointer declared — and either a stable-path redirect check or a page under https://docs.adcontextprotocol.org/dist/docs/<build>/ carrying the same build, via the web-fetch tool, shell curl, or a search followed by a fetch of the returned link. An answer grounded only in the bundled resource map, the CSV notes, or memory fails.",
+        "The final answer states the AdCP version and the build together, the build written exactly as the pointer states it, and dates the check (month and year at minimum).",
+        "The stated build equals the build the pointer declared as recorded in the run's own transcript. The grader never fetches the pointer at grading time, since a build can ship between run and grading; a transcript that lacks the pointer's declared build fails this expectation as unverifiable. This eval hardcodes no build.",
+        "Every docs.adcontextprotocol.org page the answer cites is llms-current.md, the llms.txt hub, an /_llms/ index for the stated version, a page under /dist/docs/<the stated build>/, or a stable unversioned /docs/<page> path cited as the redirect check. No archived-release or pre-release page (a /dist/docs/ path of a non-current build, or an /_llms/ index with an -rc or -beta suffix) is cited.",
+        "If the transcript shows no successful pull of the pointer or of a versioned page, the answer labels its AdCP claims as unverified and states no version or build as verified.",
+        "The answer's classification of format_options matches the fetched page or schema: it names where the field is defined (product object or placement object) or labels it unverified, and never calls it non-standard or vendor-internal without naming the schema on which it is absent.",
+        "The answer does not call yield_tier_hint non-standard or vendor-internal unless it names the fetched schema for the product object on which the field is absent and states whether that schema permits additional properties, classifying the field as a permitted extension rather than a spec break when it does; without that schema in hand it labels the field unverified.",
+        "If the answer states that yield_tier_hint is defined by AdCP, it names the fetched schema or task page that defines it and the grader confirms the field is present there; a positive claim without that citation, or one the cited page does not support, fails."
+      ]
+    }
+  ]
+}

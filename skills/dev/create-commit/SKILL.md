@@ -25,7 +25,13 @@ must honestly describe the change.
    (`gh repo view --json defaultBranchRef -q .defaultBranchRef.name`), plus
    `main`, `master`, `develop`, and `release/*` branches. Committing straight to
    any of them is off-limits — create or switch to a feature branch first, using
-   the **create-branch** skill when it's available.
+   the **create-branch** skill when it's available. On a feature branch, also
+   check freshness: if the branch has a pull request that is already merged or
+   closed (`gh pr view --json state`), stop — commits added now strand silently
+   and never reach the base. Put the work on a fresh branch instead
+   (**create-branch** again — it cuts from freshly fetched `origin/<base>`, so
+   the local base never needs a `git pull`); `gh pr view` erroring with
+   "no pull requests found" means no PR yet, which is fine — proceed.
 2. **See what's staged.** Run `git diff --staged --stat` (then `git diff --staged`
    for detail). If nothing is staged, stop and ask the user what to stage rather
    than guessing — never `git add -A` on their behalf. When staging on the user's

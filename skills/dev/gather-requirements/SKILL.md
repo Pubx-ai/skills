@@ -1,19 +1,17 @@
 ---
 name: gather-requirements
 description: >
-  Turn a raw, underspecified feature request into a structured, implementation-ready
-  requirements document before any planning or coding begins. Use this skill whenever
-  the user describes something they want built but the details are thin — phrases like
-  "I want to add X", "we need a feature that…", "gather requirements", "flesh out this
-  ticket", "turn this into a spec", "write the requirements for…", or "what do you need
-  to know before building this?" — and also when handed a rough Jira ticket, user story,
-  or one-liner that lacks technical context, acceptance criteria, or scope. Also use it
-  when the user wants an interview-style interrogation of a feature idea — "grill me about
-  this feature", "stress-test these requirements", "interview me about what I want". It
-  reads the project's own conventions, asks targeted clarifying questions one decision at
-  a time with a recommended answer, and writes a complete requirements doc to a file so an
-  implementation planner has everything it needs. Prefer this over jumping straight into
-  code when the ask is vague or open to interpretation.
+  Turn a raw, underspecified feature request into a structured, implementation-ready requirements
+  document before any planning or coding begins. Use whenever the user describes something they want
+  built but the details are thin — "I want to add X", "we need a feature that…", "gather
+  requirements", "flesh out this ticket", "turn this into a spec", "write the requirements for…",
+  "what do you need to know before building this?" — and when handed a rough Jira ticket, user
+  story, or one-liner lacking technical context, acceptance criteria, or scope. Also use it for an
+  interview-style interrogation of a feature idea — "grill me about this feature", "stress-test
+  these requirements", "interview me about what I want". It reads the project's own conventions,
+  asks targeted clarifying questions one decision at a time with a recommended answer, and writes a
+  complete requirements doc to a file for the implementation planner. Prefer it over jumping
+  straight into code when the ask is vague.
 ---
 
 # Gather Requirements

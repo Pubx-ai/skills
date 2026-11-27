@@ -46,20 +46,45 @@ Run the checks; each failure has a specific remedy, not a workaround:
   either forgotten work (commit them) or unrelated clutter (leave behind,
   but tell the user they exist). Never let them decide silently.
 - **An existing PR for this branch?** `gh pr view` — if one exists, this is a
-  push-and-update, not a new PR.
+  push-and-update, not a new PR, and its `baseRefName` **is** the `<base>`
+  for every later step, overriding whatever the commits-ahead check derived
+  (a stacked PR targets its stack parent, not the repo default; auditing or
+  reviewing against the wrong base gates a different diff than the PR
+  shows). If it differs from what that check used, re-run the check against
+  it — including its `git fetch origin <base>` refresh.
 
-## 2. Review before raising
+## 2. Bring the documentation along
+
+Run the **update-documentation** skill in branch-scoped mode against the
+`<base>` resolved in step 1 (its freshly fetched `origin/<base>` ref) —
+documentation claims invalidated by this branch must be fixed before the
+review gate, whether this run raises a new PR or updates an existing one.
+If it changes anything, commit the updates with **create-commit** so the
+review in step 3 covers them. Anything it flags
+but doesn't fix (declined restructure or deletion proposals, unreachable
+external docs, missing files it defers to create-documentation) goes into
+the PR body's Notes
+section in step 4. When the project has no documentation, the skill reports
+that and this step is a no-op — scaffolding docs is never part of raising a
+PR.
+
+## 3. Review before raising
 
 Run the **local-pr-review** skill over the branch's full diff and address its
 findings before pushing — the PR gate. Tell it explicitly to review against
 the `<base>` resolved in step 1 rather than letting it derive its own: the
 review must cover the same diff the PR will present, or the gate is checking
-a different door. If addressing findings
-adds commits, re-run it until the final diff passes. Skip only if the user
-explicitly wants a draft PR for early feedback; mark it as a draft
-(`--draft`) in that case.
+a different door. If a review fix changes paths or behaviour the docs
+reference, repeat step 2 once before re-running the review. If addressing
+findings adds commits, re-run the review — up to two more times. If findings
+persist after that, present the remaining ones to the user and stop: on
+their explicit go-ahead, continue to step 4; on a no, an unclear answer, or
+no answer (non-interactive), do not push or raise — report the open findings
+and leave the branch as it is. Skip the review only if the user explicitly
+wants a draft PR for early feedback; mark it as a draft (`--draft`) in that
+case.
 
-## 3. Push and raise
+## 4. Push and raise
 
 1. Push with tracking: `git push -u origin <branch>`.
 2. **Title** — conventional-commit style, matching the branch's dominant
@@ -92,7 +117,7 @@ explicitly wants a draft PR for early feedback; mark it as a draft
    agent-raised PRs stay identifiable.
 4. Report the PR URL back to the user.
 
-## 4. Hand off
+## 5. Hand off
 
 Review bots (CodeRabbit, Bugbot) post their findings on the new PR within
 minutes. When they do — or when human reviews land — the
